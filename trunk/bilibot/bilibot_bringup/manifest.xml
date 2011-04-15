@@ -1,0 +1,14 @@
+<package>
+  <description brief="bilibot_bringup">
+
+     bilibot_bringup
+
+  </description>
+  <author>garratt</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/bilibot_bringup</url>
+
+</package>
+
+
