@@ -1,14 +1,18 @@
 <package>
   <description brief="bilibot_bringup">
 
-     bilibot_bringup
+     bilibot_bringup provides roslaunch scripts for starting the bilibot base functionality.
 
   </description>
-  <author>garratt</author>
+  <author>Jeff Rousseau</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/bilibot_bringup</url>
 
-</package>
+  <depend package="turtlebot_node"/>
+  <depend package="openni_camera"/>
+  <depend package="pointcloud_to_laserscan"/>
+  <depend package="tf"/>
 
+</package>
 
