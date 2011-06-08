@@ -8,15 +8,26 @@ from dbus.mainloop.glib import DBusGMainLoop
 
 TYPE = "_ros._tcp"
 
-def service_resolved(*args):
+def service_resolved(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11):
+    print '===================='
     print 'service resolved'
-    print 'port:', args
-    n = pynotify.Notification("Found Bilibot", "Configuring Bilibot for remote application support...")
-    n.show()
-    file = open('/home/bilibot/ros/setup.sh', 'a')
-    file.write("export ROS_MASTER_URI=http://%s:11311"%args)
-    n = pynotify.Notification("Bilibot Configured", "You can now run applications on the Bilibot")
-    n.show()
+    print 'opt:', a1
+    print 'opt:', a2
+    print 'name:', a3
+    print 'opt:', a4
+    print 'opt:', a5
+    print 'opt:', a6
+    print 'opt:', a7
+    print 'address:', a8
+    print 'port:', a9
+    print 'opt:', a10
+    print 'opt:', a11
+    #n = pynotify.Notification("Found Bilibot", "Configuring Bilibot for remote application support...")
+    #n.show()
+    file = open('/home/labuser/ros/setup.sh', 'a')
+    #file.write("export ROS_MASTER_URI=http://%s:11311"%args)
+    #n = pynotify.Notification("Bilibot Configured", "You can now run applications on the Bilibot")
+    #n.show()
 
 def print_error(*args):
     print 'error_handler'
@@ -25,9 +36,10 @@ def print_error(*args):
 def myhandler(interface, protocol, name, stype, domain, flags):
     print "Found service '%s' type '%s' domain '%s' " % (name, stype, domain)
 
-    if flags & avahi.LOOKUP_RESULT_LOCAL:
+    #FIXME uncomment in prod version
+    #if flags & avahi.LOOKUP_RESULT_LOCAL:
             # local service, skip
-            pass
+    #        pass
 
     server.ResolveService(interface, protocol, name, stype, 
         domain, avahi.PROTO_UNSPEC, dbus.UInt32(0), 
