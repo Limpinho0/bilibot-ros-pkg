@@ -3,6 +3,7 @@
 import wx
 import dbus, gobject, avahi
 import pynotify
+import os 
 from dbus.mainloop.glib import DBusGMainLoop
 
 class MasterSelectorFrame(wx.Frame):
@@ -31,7 +32,7 @@ class MasterSelectorFrame(wx.Frame):
         addr = settings[1].strip()
         port = settings[2].strip()
 
-        file = open('/home/labuser/ros/master.sh', 'w')
+        file = open('%s/ros/master.sh'%os.getenv("HOME"), 'w')
         file.write("export ROS_MASTER_URI=http://%s:%s"%(addr,port))
         file.close()
 
