@@ -1,0 +1,3 @@
+#rules to disambiguate the atmel from the create:
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A8006yGE", SYMLINK+="/bilibot/atmel"
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A8006yGP", SYMLINK+="/bilibot/create"
