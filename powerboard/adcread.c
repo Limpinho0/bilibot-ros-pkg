@@ -90,31 +90,7 @@ SIGNAL(SIG_USART0_RECV){
 }
 
 
-uint8_t adc_readings_l[8];
-uint8_t adc_readings_h[8];
 
-SIGNAL(SIG_ADC){ 
- 	togglePB7();
-  uint8_t channel = ADMUX & 0x07;
-  //make reading
-  adc_readings_l[channel] = ADCL;
-  adc_readings_h[channel] = ADCH;
-//   stransmitf(" r: %i ",channel);
-//   uint8_t i=0;
-//   for(i=0;i<8;i++)
-//     stransmitf(" %04i ",adc_readings[i]);
-//   transmit('\n');
-//   transmit('\r');
-//   transmit(10);
-//   transmit(13);
-  //update channel:
-  channel++;
-  setADCChannel(channel);
-  
-  //start next adc read:
-  ADCSRA |= 0x40;
-  
-}
 
 void setupSerial(){
   
