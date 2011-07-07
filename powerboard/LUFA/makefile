@@ -19,7 +19,6 @@ all:
 	@echo
 	$(MAKE) -C LUFA $@ -s
 	$(MAKE) -C Demos $@ -s
-	$(MAKE) -C Projects $@ -s
 	$(MAKE) -C Bootloaders $@ -s
 	@echo
 	@echo LUFA \"make $@\" operation complete.

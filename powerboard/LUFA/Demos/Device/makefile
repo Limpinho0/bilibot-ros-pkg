@@ -17,5 +17,4 @@ all:
 
 %:
 	$(MAKE) -C ClassDriver $@
-	$(MAKE) -C LowLevel $@
 

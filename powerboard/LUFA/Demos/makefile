@@ -17,6 +17,4 @@ all:
 
 %:
 	$(MAKE) -C Device $@
-	$(MAKE) -C Host $@
-	$(MAKE) -C DualRole $@
 
