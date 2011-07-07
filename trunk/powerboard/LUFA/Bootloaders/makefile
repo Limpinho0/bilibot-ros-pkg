@@ -17,14 +17,6 @@ all:
 	$(MAKE) -C CDC clean
 	$(MAKE) -C CDC all
 
-	$(MAKE) -C HID clean
-	$(MAKE) -C HID all
-
-	$(MAKE) -C DFU clean
-	$(MAKE) -C DFU all
-
 %:
 	$(MAKE) -C CDC $@
-	$(MAKE) -C DFU $@
-	$(MAKE) -C HID $@
 
