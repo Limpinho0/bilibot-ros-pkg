@@ -146,6 +146,9 @@
 
 			/** Selects the Atmel EVK1101 specific board drivers, including the Button, Joystick and LED drivers. */
 			#define BOARD_EVK1101       27
+	
+			/** Selects the Bilibot specific board drivers, including the Button and LED drivers. */
+			#define BOARD_BILIBOT       29
 			
 			#if !defined(__DOXYGEN__)
 				#define BOARD_          BOARD_NONE
