@@ -1,3 +1,11 @@
 #rules to disambiguate the atmel from the create:
-ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A8006yGE", SYMLINK+="/bilibot/atmel"
-ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A8006yGP", SYMLINK+="/bilibot/create"
+#some board...
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A8006yGE", SYMLINK+="bilibot/atmel"
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A8006yGP", SYMLINK+="bilibot/create"
+# A3
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A8006yGJ", SYMLINK+="bilibot/atmel"
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A8006yGG", SYMLINK+="bilibot/create"
+
+
+
+
