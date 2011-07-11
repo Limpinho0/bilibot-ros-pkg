@@ -117,6 +117,8 @@
 		static inline uint8_t LEDs_GetLEDs(void) { return 0; }
 	#elif (BOARD == BOARD_USBKEY)
 		#include "USBKEY/LEDs.h"
+	#elif (BOARD == BOARD_BILIBOT)
+		#include "BILIBOT/LEDs.h"
 	#elif (BOARD == BOARD_STK525)
 		#include "STK525/LEDs.h"
 	#elif (BOARD == BOARD_STK526)
