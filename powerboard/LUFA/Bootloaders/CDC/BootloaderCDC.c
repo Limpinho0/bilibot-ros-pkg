@@ -56,6 +56,7 @@ static uint32_t CurrAddress;
  */
 static bool RunBootloader = true;
 
+static bool activated = false;
 
 /** Main program entry point. This routine configures the hardware required by the bootloader, then continuously
  *  runs the bootloader processing routine until instructed to soft-exit, or hard-reset via the watchdog to start
@@ -72,18 +73,33 @@ int main(void)
 	/* Enable global interrupts so that the USB stack can function */
 	sei();
 
+	uint16_t counter=0;
 	while (RunBootloader)
 	{
+	  
 		CDC_Task();
 		USB_USBTask();
+		if(!activated){
+			_delay_ms(1);
+			counter++;
+		}
+		if(counter>4000)
+			RunBootloader=false;
+		
 	}
 
 	/* Disconnect from the host - USB interface will be reset later along with the AVR */
 	USB_Detach();
 
 	/* Enable the watchdog and force a timeout to reset the AVR */
-	wdt_enable(WDTO_250MS);
+//	wdt_enable(WDTO_250MS);
 
+	
+	
+	/* Start the user application */
+ 	AppPtr_t AppStartPtr = (AppPtr_t)0x0000;
+ 	AppStartPtr();	
+	
 	for (;;);
 }
 
@@ -113,7 +129,7 @@ void SetupHardware(void)
 /** ISR to periodically toggle the LEDs on the board to indicate that the bootloader is active. */
 ISR(TIMER1_OVF_vect, ISR_BLOCK)
 {
-	LEDs_ToggleLEDs(LEDS_LED1 | LEDS_LED2);
+	LEDs_ToggleLEDs(LEDS_LED1);
 }
 
 /** Event handler for the USB_ConfigurationChanged event. This configures the device's endpoints ready
@@ -149,7 +165,7 @@ void EVENT_USB_Device_ControlRequest(void)
 	}
 
 	/* Activity - toggle indicator LEDs */
-	LEDs_ToggleLEDs(LEDS_LED1 | LEDS_LED2);
+	LEDs_ToggleLEDs(LEDS_LED1);
 
 	/* Process CDC specific control requests */
 	switch (USB_ControlRequest.bRequest)
@@ -359,6 +375,7 @@ void CDC_Task(void)
 	if (!(Endpoint_IsOUTReceived()))
 	  return;
 
+	activated=true;
 	/* Read in the bootloader command (first byte sent from host) */
 	uint8_t Command = FetchNextCommandByte();
 

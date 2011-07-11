@@ -1,6 +1,6 @@
 # Hey Emacs, this is a -*- makefile -*-
 #----------------------------------------------------------------------------
-# WinAVR Makefile Template written by Eric B. Weddington, Jörg Wunsch, et al.
+# WinAVR Makefile Template written by Eric B. Weddington, Jï¿½rg Wunsch, et al.
 #  >> Modified for use with the LUFA project. <<
 #
 # Released to the Public Domain
@@ -58,7 +58,7 @@ ARCH = AVR8
 # Target board (see library "Board Types" documentation, NONE for projects not requiring
 # LUFA board drivers). If USER is selected, put custom board drivers in a directory called
 # "Board" inside the application directory.
-BOARD = USBKEY
+BOARD = BILIBOT
 
 
 # Processor frequency.
