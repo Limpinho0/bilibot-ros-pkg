@@ -103,6 +103,8 @@
 			#error The Board Joystick driver cannot be used if the makefile BOARD option is not set.
 		#elif (BOARD == BOARD_USBKEY)
 			#include "USBKEY/Joystick.h"
+		#elif (BOARD == BOARD_BILIBOT)
+			#include "BILIBOT/Joystick.h"
 		#elif (BOARD == BOARD_STK525)
 			#include "STK525/Joystick.h"
 		#elif (BOARD == BOARD_STK526)

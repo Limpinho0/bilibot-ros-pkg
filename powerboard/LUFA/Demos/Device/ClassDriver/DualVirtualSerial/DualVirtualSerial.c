@@ -94,7 +94,9 @@ int main(void)
 {
 	SetupHardware();
 
-	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+	LEDs_SetAllLEDs(LEDS_LED1 | LEDS_LED2);
+	for(int i=0; i<10; i++)
+		_delay_ms(500);
 	sei();
 
 	for (;;)
