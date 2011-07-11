@@ -56,6 +56,29 @@ static uint32_t CurrAddress;
  */
 static bool RunBootloader = true;
 
+
+/** Resets all configured hardware required for the bootloader back to their original states. */
+void ResetHardware(void)
+{
+	/* Shut down the USB subsystem */
+	//USB_ShutDown();
+	USB_ResetInterface();
+	USB_Detach();
+	USB_Disable();
+	
+	/* Relocate the interrupt vector table back to the application section */
+	MCUCR = (1 << IVCE);
+	MCUCR = 0;
+
+	/* Re-enable RWW section */
+	boot_rww_enable();
+}
+
+
+
+
+
+
 static bool activated = false;
 
 /** Main program entry point. This routine configures the hardware required by the bootloader, then continuously
@@ -87,9 +110,10 @@ int main(void)
 			RunBootloader=false;
 		
 	}
-
-	/* Disconnect from the host - USB interface will be reset later along with the AVR */
-	USB_Detach();
+	/* Reset all configured hardware to their default states for the user app */
+	ResetHardware();
+//	/* Disconnect from the host - USB interface will be reset later along with the AVR */
+//	USB_Detach();
 
 	/* Enable the watchdog and force a timeout to reset the AVR */
 //	wdt_enable(WDTO_250MS);
