@@ -73,30 +73,56 @@ int main(void)
 {
 	SetupHardware();
 
+	uint16_t counter=0;
 	/* Create a regular character stream for the interface so that it can be used with the stdio.h functions */
 	CDC_Device_CreateStream(&VirtualSerial_CDC_Interface, &USBSerialStream);
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
 	sei();
 
-	for (;;)
-	{
-		CheckJoystickMovement();
-
-		/* Must throw away unused bytes from the host, or it will lock up while waiting for the device */
+//		  LEDs_ToggleLEDs(LEDS_LED2);
 		CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
-
 		CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
 		USB_USBTask();
+		_delay_ms(1);
+		  LEDs_ToggleLEDs(LEDS_LED2);
+	for (;;)
+	{
+//		CheckJoystickMovement();
+
+		/* Must throw away unused bytes from the host, or it will lock up while waiting for the device */
+//		CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
+		/* Echo all received data on the  CDC interface */
+		int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
+		if (!(ReceivedByte < 0))
+		  CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (uint8_t)ReceivedByte);
+		
+		
+		CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
+		USB_USBTask();
+		_delay_ms(1);
+		counter++;
+		if(counter>1000){
+		  LEDs_ToggleLEDs(LEDS_LED2);
+		  counter=0;
+		}
 	}
+}
+
+/** ISR to periodically toggle the LEDs on the board to indicate that the bootloader is active. */
+ISR(TIMER1_OVF_vect, ISR_BLOCK)
+{
+// 	LEDs_ToggleLEDs(LEDS_LED1);
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
+
+  
 	/* Disable watchdog if enabled by bootloader/fuses */
-	MCUSR &= ~(1 << WDRF);
-	wdt_disable();
+//	MCUSR &= ~(1 << WDRF);
+//	wdt_disable();
 
 	/* Disable clock division */
 	clock_prescale_set(clock_div_1);
@@ -108,36 +134,36 @@ void SetupHardware(void)
 }
 
 /** Checks for changes in the position of the board joystick, sending strings to the host upon each change. */
-void CheckJoystickMovement(void)
-{
-	uint8_t     JoyStatus_LCL = Joystick_GetStatus();
-	char*       ReportString  = NULL;
-	static bool ActionSent    = false;
-
-	if (JoyStatus_LCL & JOY_UP)
-	  ReportString = "Joystick Up\r\n";
-	else if (JoyStatus_LCL & JOY_DOWN)
-	  ReportString = "Joystick Down\r\n";
-	else if (JoyStatus_LCL & JOY_LEFT)
-	  ReportString = "Joystick Left\r\n";
-	else if (JoyStatus_LCL & JOY_RIGHT)
-	  ReportString = "Joystick Right\r\n";
-	else if (JoyStatus_LCL & JOY_PRESS)
-	  ReportString = "Joystick Pressed\r\n";
-	else
-	  ActionSent = false;
-
-	if ((ReportString != NULL) && (ActionSent == false))
-	{
-		ActionSent = true;
-
-		/* Write the string to the virtual COM port via the created character stream */
-		fputs(ReportString, &USBSerialStream);
-
-		/* Alternatively, without the stream: */
-		// CDC_Device_SendString(&VirtualSerial_CDC_Interface, ReportString);
-	}
-}
+// void CheckJoystickMovement(void)
+// {
+// 	uint8_t     JoyStatus_LCL = Joystick_GetStatus();
+// 	char*       ReportString  = NULL;
+// 	static bool ActionSent    = false;
+// 
+// 	if (JoyStatus_LCL & JOY_UP)
+// 	  ReportString = "Joystick Up\r\n";
+// 	else if (JoyStatus_LCL & JOY_DOWN)
+// 	  ReportString = "Joystick Down\r\n";
+// 	else if (JoyStatus_LCL & JOY_LEFT)
+// 	  ReportString = "Joystick Left\r\n";
+// 	else if (JoyStatus_LCL & JOY_RIGHT)
+// 	  ReportString = "Joystick Right\r\n";
+// 	else if (JoyStatus_LCL & JOY_PRESS)
+// 	  ReportString = "Joystick Pressed\r\n";
+// 	else
+// 	  ActionSent = false;
+// 
+// 	if ((ReportString != NULL) && (ActionSent == false))
+// 	{
+// 		ActionSent = true;
+// 
+// 		/* Write the string to the virtual COM port via the created character stream */
+// 		fputs(ReportString, &USBSerialStream);
+// 
+// 		/* Alternatively, without the stream: */
+// 		// CDC_Device_SendString(&VirtualSerial_CDC_Interface, ReportString);
+// 	}
+// }
 
 /** Event handler for the library USB Connection event. */
 void EVENT_USB_Device_Connect(void)
