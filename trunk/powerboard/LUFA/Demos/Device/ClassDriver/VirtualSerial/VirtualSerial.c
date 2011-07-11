@@ -35,6 +35,7 @@
  */
 
 #include "VirtualSerial.h"
+#include "pinmapping.h"
 
 /** LUFA CDC Class driver interface configuration and state information. This structure is
  *  passed to all CDC Class driver functions, so that multiple instances of the same class
@@ -66,6 +67,59 @@ USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
 static FILE USBSerialStream;
 
 
+void setupMotors(){
+   DDRC |= 0xfc;
+   DDRF = 0;
+  
+}
+
+  void setMotorMove(uint8_t c){
+      
+      l_BASE_SPD;  //disable base motor
+      l_HAND_SPD;  //disable hand motor
+      
+      if(c=='Y'){
+	h_BASE_CTRL_B; 
+	l_BASE_CTRL_A;
+      }
+      if(c=='H'){
+	l_BASE_CTRL_B; 
+	h_BASE_CTRL_A;
+      }
+      
+      if(c=='T'){
+	h_HAND_CTRL_B; 
+	l_HAND_CTRL_A;
+      }
+      if(c=='G'){
+	l_HAND_CTRL_B; 
+	h_HAND_CTRL_A;
+      }
+      if(c == 'Y' || c=='H' || c=='T' || c=='G'){
+	h_BASE_SPD;  //enable base motor
+	h_HAND_SPD;  //enable hand motor
+      }
+      else{
+	l_BASE_CTRL_A;
+	l_BASE_CTRL_B;
+	l_HAND_CTRL_A;
+	l_HAND_CTRL_B;
+      }
+  }
+
+
+void parseCommand(uint8_t c){
+  if(c=='C'){
+      Toggle_CREATE_PWR_EN;
+  }
+    if(c=='K'){
+      Toggle_KIN_EN;
+  }
+  if(c == 'Y' || c=='H' || c=='T' || c=='G' || c=='s' || c=='S')
+    setMotorMove(c);
+}
+
+
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
  */
@@ -94,10 +148,10 @@ int main(void)
 //		CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
 		/* Echo all received data on the  CDC interface */
 		int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
-		if (!(ReceivedByte < 0))
+		if (!(ReceivedByte < 0)){
 		  CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (uint8_t)ReceivedByte);
-		
-		
+		  parseCommand((uint8_t)ReceivedByte);
+		}
 		CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
 		USB_USBTask();
 		_delay_ms(1);
@@ -118,8 +172,9 @@ ISR(TIMER1_OVF_vect, ISR_BLOCK)
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
-
-  
+SETUP_CREATE_PWR_EN;
+SETUP_KIN_EN;
+  setupMotors();
 	/* Disable watchdog if enabled by bootloader/fuses */
 //	MCUSR &= ~(1 << WDRF);
 //	wdt_disable();
