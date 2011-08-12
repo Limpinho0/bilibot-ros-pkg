@@ -36,6 +36,8 @@
 
 #include "VirtualSerial.h"
 #include "pinmapping.h"
+#include "adc.h"
+
 
 /** LUFA CDC Class driver interface configuration and state information. This structure is
  *  passed to all CDC Class driver functions, so that multiple instances of the same class
@@ -66,156 +68,6 @@ USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
  */
 static FILE USBSerialStream;
 
-
-void setupMotors(){
-   DDRC |= 0xfc;
-   DDRF = 0;
-  
-}
-
-uint16_t handspeed;
-uint8_t handon;
-
-SIGNAL(TIMER3_COMPA_vect){
-  if(handon==0)
-    return;
-  l_HAND_SPD;
-  
-  
-}
-
-SIGNAL(TIMER3_COMPB_vect){
-  if(handon==0)
-    return;
-  
-  
-  
-}
-SIGNAL(TIMER3_OVF_vect){
-  if(handon==0)
-   l_HAND_SPD;
-  else{
-    
-    //set at the top:
-    h_HAND_SPD;
-  }  
-  
-}
-
-void increaseHandSpeed(){
- if(handspeed<16000)
-   handspeed+=100;
- OCR3A=handspeed;
-}
-
-void decreaseHandSpeed(){
- if(handspeed>100)
-   handspeed-=100;
- OCR3A=handspeed;
-}
-
-
-  void setMotorMove(uint8_t c){
-      
- /*     l_BASE_SPD;  //disable base motor
-      l_HAND_SPD;  //disable hand motor
- */     
-      if(c=='Y'){
-	h_BASE_CTRL_B; 
-	l_BASE_CTRL_A;
-      }
-      if(c=='H'){
-	l_BASE_CTRL_B; 
-	h_BASE_CTRL_A;
-      }
-      
-      if(c=='T'){
-	if(handon)
-	  increaseHandSpeed();
-	else{
-	    handon=1;
-	    handspeed=1000;
-	    OCR3A=handspeed;
-	}
-	h_HAND_CTRL_B; 
-	l_HAND_CTRL_A;
-	return;
-      }
-      if(c=='G'){
-	if(handon){
-	  if(handspeed<16000)
-	    handspeed+=100;
-	    OCR3A=handspeed;
-	}
-	else{
-	    handon=1;
-	    handspeed=8000;
-	    OCR3A=handspeed;
-	}
-	l_HAND_CTRL_B; 
-	h_HAND_CTRL_A;
-	return;
-      }
-      
-      if(c=='g'){
-	if(handon)
-	  decreaseHandSpeed();
-	else{
-	    handon=1;
-	    handspeed=8000;
-	    OCR3A=handspeed;
-	}
-	l_HAND_CTRL_B; 
-	h_HAND_CTRL_A;
-	return;
-      }
-//       if(c == 'Y' || c=='H' || c=='T' || c=='G'){
-// 	h_BASE_SPD;  //enable base motor
-// 	h_HAND_SPD;  //enable hand motor
-//       }
-      
-	handon=0;
-	l_BASE_CTRL_A;
-	l_BASE_CTRL_B;
-	l_HAND_CTRL_A;
-	l_HAND_CTRL_B;
-      
-  }
-
-
-void setupHandOsc(){
-//TCCR3A
-//////////  10xxxxxx     //COM3A  OC3A clear on compare
-//  00xxxxxx     //COM3A  going to manually toggle pin
-//  xx0000xx     //COM1B/C  not toggling pins
-//  xxxxxx10      //fast PWM top= ICR3
-TCCR3A=0x82;
-  
- //TCCR3B:
-//  0xxxxxxx     //input capture noise canelation off
-//  x1xxxxxx     //input capture edge select = rising
-//  xx0xxxxx     // N/C
-//  xxx11xxx      //waveform generation: fast pwm
-//  xxxxx001      //prescaler = 1
-//0x59
-TCCR3B=0x59;
-
-//lets set osc freq to 1Khz:
-ICR3=16000;
-//set both PWM to 50%:
-OCR3A=8000;
-OCR3B=8000;
-
-//TIMSK3   - timer 3 interrupts
-//  00xxxxxx     //N/C
-//  xx0xxxxx     //input capture interrupt  
-//  xxx0xxxx     // N/C
-//  xxxx011x      //output compare B,A on, C off
-//  xxxxxxx1      //timer overflow
-TIMSK3 = 0x07;
-  
-}
-
 void parseCommand(uint8_t c){
   if(c=='C'){
       Toggle_CREATE_PWR_EN;
@@ -223,9 +75,45 @@ void parseCommand(uint8_t c){
     if(c=='K'){
       Toggle_KIN_EN;
   }
+#if SIMPLEMOTOR
+  
   if(c == 'Y' || c=='H' || c=='T' || c=='G'|| c=='g' || c=='s' || c=='S')
     setMotorMove(c);
+#endif  
+  
 }
+#define stransmitf(args...)  {                   \
+		  char tstring[50];					\
+		  sprintf(tstring,args);			\
+		  transmitstring(tstring,strlen(tstring));	\
+                    } 
+
+void sendByte(char c){
+	CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (uint8_t)c);
+}
+
+
+void transmitstring(char *tx, int len){
+	int i;
+	for(i=0;i<len;i++)
+		sendByte(tx[i]);
+}
+
+
+#ifdef USING_ADC
+
+void printADC(){
+//   uint8_t lpot=ADC_BASE_POT_L;
+//   uint8_t hpot=ADC_BASE_POT_H;
+//   
+//   uint16_t pot = hpot;
+//   pot=pot*0x0100+ lpot;
+  uint16_t pot = ADC_BASE_POT;
+  stransmitf("0x%4x \r\n", pot);
+  
+}
+
+#endif
 
 
 /** Main program entry point. This routine contains the overall program flow, including initial
@@ -264,8 +152,13 @@ int main(void)
 		USB_USBTask();
 		_delay_ms(1);
 		counter++;
-		if(counter>1000){
+		if(counter>10){
 		  LEDs_ToggleLEDs(LEDS_LED2);
+		  #ifdef USING_ADC
+		  printADC();
+		  #endif
+// 		  stransmitf("hello world");
+		  
 		  counter=0;
 		}
 	}
@@ -282,8 +175,15 @@ void SetupHardware(void)
 {
 SETUP_CREATE_PWR_EN;
 SETUP_KIN_EN;
+#if SIMPLEMOTOR
   setupMotors();
   setupHandOsc();
+#endif
+#ifdef USING_ADC
+setupADC();
+  //start next adc read:
+   ADCSRA |= 0x40;
+#endif
 	/* Disable watchdog if enabled by bootloader/fuses */
 //	MCUSR &= ~(1 << WDRF);
 //	wdt_disable();

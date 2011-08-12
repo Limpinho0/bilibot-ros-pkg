@@ -1,5 +1,8 @@
 //this header has all the adc related stuff
 
+#ifndef ADC_H
+#define ADC_H
+#define USING_ADC
 
 
 
@@ -21,17 +24,29 @@
 #define ADC_TEMP_H adc_readings_h[6]
 #define ADC_BASE_POT_H adc_readings_h[7]
 
-#define ADC_AD0       (ADC_AD0_L + ADC_AD0_H<<8)
-#define ADC_AD1       (ADC_AD1_L + ADC_AD1_H<<8)
-#define ADC_BATT      (ADC_BATT_L +  ADC_BATT_H<<8)
-#define ADC_BASE_POT  (ADC_BASE_POT_L +  ADC_BASE_POT_H<<8)
-#define ADC_BASE_CURR (ADC_BASE_CURR_L +  ADC_BASE_CURR_H<<8)
-#define ADC_HAND_CURR (ADC_HAND_CURR_L +  ADC_HAND_CURR_H<<8)
-#define ADC_TEMP      (ADC_TEMP_L +  ADC_TEMP_H<<8)
-#define ADC_GYRO      (ADC_GYRO_L +  ADC_GYRO_H<<8)
+// #define ADC_AD0       (ADC_AD0_L + ADC_AD0_H<<8)
+// #define ADC_AD1       (ADC_AD1_L + ADC_AD1_H<<8)
+// #define ADC_BATT      (ADC_BATT_L +  ADC_BATT_H<<8)
+// #define ADC_BASE_POT  (ADC_BASE_POT_L +  ADC_BASE_POT_H<<8)
+// #define ADC_BASE_CURR (ADC_BASE_CURR_L +  ADC_BASE_CURR_H<<8)
+// #define ADC_HAND_CURR (ADC_HAND_CURR_L +  ADC_HAND_CURR_H<<8)
+// #define ADC_TEMP      (ADC_TEMP_L +  ADC_TEMP_H<<8)
+// #define ADC_GYRO      (ADC_GYRO_L +  ADC_GYRO_H<<8)
+
+#define ADC_AD0 adc_readings[0]
+#define ADC_AD1 adc_readings[1]
+#define ADC_BATT adc_readings[2]
+#define ADC_GYRO adc_readings[3]
+#define ADC_BASE_CURR adc_readings[4]
+#define ADC_HAND_CURR adc_readings[5]
+#define ADC_TEMP adc_readings[6]
+#define ADC_BASE_POT adc_readings[7]
+
+
 
 uint8_t adc_readings_l[8];
 uint8_t adc_readings_h[8];
+uint16_t adc_readings[8];
 
 void setADCChannel(uint8_t channel){
     ADMUX &= 0xf8;
@@ -56,16 +71,18 @@ void setupADC(){
   //  xxxx x111   ADC prescaler of 128, so adc freq is 125Khz
   ADCSRA=0x9f;
   DDRF = 0x00;
-  
 }
 
 
-SIGNAL(SIG_ADC){ 
- 	togglePB7();
+SIGNAL(ADC_vect){ 
   uint8_t channel = ADMUX & 0x07;
   //make reading
   adc_readings_l[channel] = ADCL;
   adc_readings_h[channel] = ADCH;
+  adc_readings[channel] = adc_readings_h[channel];
+  adc_readings[channel]=adc_readings[channel]*0x0100+ adc_readings_l[channel];
+  
+  
 //   stransmitf(" r: %i ",channel);
 //   uint8_t i=0;
 //   for(i=0;i<8;i++)
@@ -82,3 +99,6 @@ SIGNAL(SIG_ADC){
   ADCSRA |= 0x40;
   
 }
+
+
+#endif
