@@ -33,10 +33,11 @@
  *  Main source file for the VirtualSerial demo. This file contains the main tasks of
  *  the demo and is responsible for the initial application hardware configuration.
  */
-
+// extern "C" {
 #include "VirtualSerial.h"
 #include "pinmapping.h"
 #include "adc.h"
+
 
 
 /** LUFA CDC Class driver interface configuration and state information. This structure is
@@ -75,7 +76,7 @@ void parseCommand(uint8_t c){
     if(c=='K'){
       Toggle_KIN_EN;
   }
-#if SIMPLEMOTOR
+#ifdef SIMPLEMOTOR
   
   if(c == 'Y' || c=='H' || c=='T' || c=='G'|| c=='g' || c=='s' || c=='S')
     setMotorMove(c);
@@ -103,13 +104,8 @@ void transmitstring(char *tx, int len){
 #ifdef USING_ADC
 
 void printADC(){
-//   uint8_t lpot=ADC_BASE_POT_L;
-//   uint8_t hpot=ADC_BASE_POT_H;
-//   
-//   uint16_t pot = hpot;
-//   pot=pot*0x0100+ lpot;
   uint16_t pot = ADC_BASE_POT;
-  stransmitf("0x%4x \r\n", pot);
+  stransmitf("%3u %3u %3u %3u\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR);
   
 }
 
@@ -175,9 +171,9 @@ void SetupHardware(void)
 {
 SETUP_CREATE_PWR_EN;
 SETUP_KIN_EN;
-#if SIMPLEMOTOR
+#ifdef SIMPLEMOTOR
   setupMotors();
-  setupHandOsc();
+//   setupHandOsc();
 #endif
 #ifdef USING_ADC
 setupADC();
