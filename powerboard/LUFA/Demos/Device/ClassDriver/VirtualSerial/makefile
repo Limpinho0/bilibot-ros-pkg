@@ -139,7 +139,7 @@ SRC = $(TARGET).c                                                 \
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
-CPPSRC = lowlevelsource.cpp
+CPPSRC =
 
 
 # List Assembler source files here.
