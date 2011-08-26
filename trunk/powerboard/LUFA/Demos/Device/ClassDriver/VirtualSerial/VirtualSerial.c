@@ -37,7 +37,8 @@
 #include "VirtualSerial.h"
 #include "pinmapping.h"
 #include "adc.h"
-
+#include "simplehighmotor.h"
+#include "music.h"
 
 
 /** LUFA CDC Class driver interface configuration and state information. This structure is
@@ -69,20 +70,7 @@ USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
  */
 static FILE USBSerialStream;
 
-void parseCommand(uint8_t c){
-  if(c=='C'){
-      Toggle_CREATE_PWR_EN;
-  }
-    if(c=='K'){
-      Toggle_KIN_EN;
-  }
-#ifdef SIMPLEMOTOR
-  
-  if(c == 'Y' || c=='H' || c=='T' || c=='G'|| c=='g' || c=='s' || c=='S')
-    setMotorMove(c);
-#endif  
-  
-}
+
 #define stransmitf(args...)  {                   \
 		  char tstring[50];					\
 		  sprintf(tstring,args);			\
@@ -101,11 +89,62 @@ void transmitstring(char *tx, int len){
 }
 
 
+
+
+
+
+
+
+
+
+
+
+void runTest1(){
+  struct Note n1;  n1.pitch=12; n1.dur=500;
+  setNote(n1);
+  uint8_t result = testMotors();
+  if(result)
+    failSong();
+  stransmitf("motor test curr = %u\r\n",result);
+  
+}
+
+
+void parseCommand(uint8_t c){
+  if(c=='C'){
+      Toggle_CREATE_PWR_EN;
+  }
+    if(c=='K'){
+      Toggle_KIN_EN;
+  }
+  if(c=='M'){
+      shortsong1();
+  }
+  if(c=='t'){
+      runTest1();
+  }
+  if(c=='f'){
+      failSong();
+  }
+  
+#ifdef SIMPLEMOTOR
+  
+  if(c == 'Y' || c=='H' || c=='T' || c=='y'|| c=='h'|| c=='G'|| c=='g' || c=='s' || c=='S' || c=='q' || c=='a')
+    setMotorMove(c);
+#endif  
+  
+}
+
+
+
+
+
+
 #ifdef USING_ADC
 
 void printADC(){
   uint16_t pot = ADC_BASE_POT;
-  stransmitf("%3u %3u %3u %3u\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR);
+  stransmitf("%3u %3u %3u %3u %7i\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR,lastspeed);
   
 }
 
@@ -148,13 +187,16 @@ int main(void)
 		USB_USBTask();
 		_delay_ms(1);
 		counter++;
-		if(counter>10){
+		   sendtoMid(); 
+		if(counter>100){
 		  LEDs_ToggleLEDs(LEDS_LED2);
+// 		  OCR0A++;
 		  #ifdef USING_ADC
 		  printADC();
 		  #endif
 // 		  stransmitf("hello world");
-		  
+// 		  
+		  simpleMotorCheck();
 		  counter=0;
 		}
 	}
@@ -180,6 +222,9 @@ setupADC();
   //start next adc read:
    ADCSRA |= 0x40;
 #endif
+   
+setupMusic();   
+   
 	/* Disable watchdog if enabled by bootloader/fuses */
 //	MCUSR &= ~(1 << WDRF);
 //	wdt_disable();

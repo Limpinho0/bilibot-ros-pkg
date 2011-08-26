@@ -42,7 +42,14 @@
 #define ADC_TEMP adc_readings[6]
 #define ADC_BASE_POT adc_readings[7]
 
-
+#define ADC_AD0_CHANNEL 0
+#define ADC_AD1_CHANNEL 1
+#define ADC_BATT_CHANNEL 2
+#define ADC_GYRO_CHANNEL 3
+#define ADC_BASE_CURR_CHANNEL 4
+#define ADC_HAND_CURR_CHANNEL 5
+#define ADC_TEMP_CHANNEL 6
+#define ADC_BASE_POT_CHANNEL 7
 
 //uint8_t adc_readings_l[8];
 //uint8_t adc_readings_h[8];
@@ -74,11 +81,44 @@ void setupADC(){
 }
 
 
+//some times we want to check for a spike or se the highest value reached.  
+//this allows us to find such data.
+uint8_t adc_maxes[8];
+uint8_t adc_mins[8];
+uint16_t adc_sums[8];
+uint8_t adcprofiles=0;
+
+void startProfile(){
+  int i;
+  for(i=0;i<8;i++){
+	adc_maxes[i]=0;
+	adc_mins[i]=255;
+	adc_sums[i]=0;      
+  }
+  adcprofiles=1;
+}
+
+void updateProfile(uint8_t channel,uint8_t reading){
+    if(reading < adc_mins[channel]) adc_mins[channel]=reading;
+    if(reading > adc_maxes[channel]) adc_maxes[channel]=reading;
+    adc_sums[channel]+=reading;
+}
+
+void stopProfile(){
+    adcprofiles=0;
+}
+
+uint8_t getProfileMax(uint8_t channel){ return adc_maxes[channel]; }
+
+
 SIGNAL(ADC_vect){ 
   uint8_t channel = ADMUX & 0x07;
   //make reading
 //  adc_readings_l[channel] = ADCL;
   adc_readings[channel] = ADCH;
+  if(adcprofiles){
+     updateProfile(channel, adc_readings[channel]); 
+  }
 //  adc_readings[channel] = adc_readings_h[channel];
   //adc_readings[channel]=adc_readings[channel]*0x0100+ adc_readings_l[channel];
   
