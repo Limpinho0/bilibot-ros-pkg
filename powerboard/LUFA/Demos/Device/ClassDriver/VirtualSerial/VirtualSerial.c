@@ -213,7 +213,7 @@ void SetupHardware(void)
 {
 SETUP_CREATE_PWR_EN;
 SETUP_KIN_EN;
-l_KIN_EN;
+h_KIN_EN;
 
 #ifdef SIMPLEMOTOR
   setupMotors();
