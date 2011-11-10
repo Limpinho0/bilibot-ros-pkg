@@ -10,6 +10,11 @@ int packet_decoded(int8_t byte, packet_t* pkt, status_t* status)
         pkt->header[0] = byte;
         status->state = STATUS_INCOMPLETE;
     }
+    else if (status->recvd == 0 && byte != HEADER_BYTE0)
+    {
+        status->state = STATUS_INCOMPLETE;
+        return STATUS_INCOMPLETE;
+    }
     else if (status->recvd == 1 && byte == HEADER_BYTE1) 
     {
         pkt->header[1] = byte;
@@ -54,6 +59,10 @@ int packet_decoded(int8_t byte, packet_t* pkt, status_t* status)
             status->state = STATUS_INVALID;
             return STATUS_INVALID;
         }
+    } else 
+    {
+        status->state = STATUS_INVALID;
+        return STATUS_INVALID;
     }
         
     status->recvd++;

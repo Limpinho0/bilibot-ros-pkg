@@ -13,6 +13,7 @@ int main(void) {
 
     // create a buffer to stream over a serial port
     int8_t* buffer = (int8_t*)malloc(sizeof(packet_t));
+    int8_t* unalignedbuffer = (int8_t*)malloc(sizeof(packet_t));
 
     // pack the buffer with pkt data
     int size = packet_to_buffer(pkt, buffer);
@@ -30,8 +31,17 @@ int main(void) {
     printf("size: %d\n", size);
 
     size = packet_to_buffer(&p, buffer);
+    unalignedbuffer[0] = 42;
     for(int i = 0; i < size; i++) {
+        unalignedbuffer[i+1] = buffer[i];
         printf("Hex: 0x%x\tDec: %d\n", buffer[i], buffer[i]);
     }
+    printf("size: %d\n", size);
+    size++;
+    for(int i = 0; i < size; i++) {
+        printf("Hex: 0x%x\tDec: %d\n", unalignedbuffer[i], unalignedbuffer[i]);
+        if(packet_decoded(unalignedbuffer[i], &p, &s) == STATUS_COMPLETE)
+            printf("built valid packet\n");
+    } 
     printf("size: %d\n", size);
 }
