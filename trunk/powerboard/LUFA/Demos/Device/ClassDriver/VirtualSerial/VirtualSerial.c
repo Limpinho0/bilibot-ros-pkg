@@ -35,6 +35,7 @@
  */
 // extern "C" {
 #include "VirtualSerial.h"
+#include "wireformat.h"
 #include "pinmapping.h"
 #include "adc.h"
 #include "simplehighmotor.h"
@@ -214,6 +215,7 @@ void SetupHardware(void)
 SETUP_CREATE_PWR_EN;
 SETUP_KIN_EN;
 h_KIN_EN;
+
 
 #ifdef SIMPLEMOTOR
   setupMotors();
