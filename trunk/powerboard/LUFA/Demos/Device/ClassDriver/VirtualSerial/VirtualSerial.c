@@ -145,7 +145,9 @@ void parseCommand(uint8_t c){
 
 void printADC(){
   uint16_t pot = ADC_BASE_POT;
-  stransmitf("%3u %3u %3u %3u %7i %3u %3u\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR,lastspeed, (0xFF & READ_ULIMIT) >> 7, (0xFF & READ_LLIMIT) >> 6);
+  // if we just want a bit from the limits, the READ_LLIMIT should probably include the shift?
+  stransmitf("%3u %3u %3u %3u %7i %3u %3u\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR,lastspeed, 
+							((0xff&READ_ULIMIT)>>7)^1, ((0xff&READ_LLIMIT)>>6)^1);
   
 }
 
