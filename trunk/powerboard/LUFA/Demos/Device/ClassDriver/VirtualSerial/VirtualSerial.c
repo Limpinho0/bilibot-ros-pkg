@@ -145,7 +145,7 @@ void parseCommand(uint8_t c){
 
 void printADC(){
   uint16_t pot = ADC_BASE_POT;
-  stransmitf("%3u %3u %3u %3u %7i\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR,lastspeed);
+  stransmitf("%3u %3u %3u %3u %7i %3u %3u\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR,lastspeed, (0xFF & READ_ULIMIT) >> 7, (0xFF & READ_LLIMIT) >> 6);
   
 }
 
@@ -215,6 +215,10 @@ void SetupHardware(void)
 SETUP_CREATE_PWR_EN;
 SETUP_KIN_EN;
 h_KIN_EN;
+SETUP_ULIMIT;
+Toggle_ULIMIT;
+SETUP_LLIMIT;
+Toggle_LLIMIT;
 
 
 #ifdef SIMPLEMOTOR
