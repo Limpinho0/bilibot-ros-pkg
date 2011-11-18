@@ -1,0 +1,14 @@
+<package>
+  <description brief="bilibot_navigation">
+
+     bilibot_navigation
+
+  </description>
+  <author>garratt</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/bilibot_navigation</url>
+
+</package>
+
+
