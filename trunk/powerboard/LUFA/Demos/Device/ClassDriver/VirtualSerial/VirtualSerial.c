@@ -178,6 +178,11 @@ int main(void)
 
 	MOTOR_DIR_MSK = MOTOR_DIR_UP | MOTOR_DIR_DN;
 
+	if (ULIMIT_VAL == 1) 
+		MOTOR_DIR_MSK &= ~MOTOR_DIR_UP;
+	if (LLIMIT_VAL == 1) 
+		MOTOR_DIR_MSK &= ~MOTOR_DIR_DN;
+
 	sei();
 
 //		  LEDs_ToggleLEDs(LEDS_LED2);
