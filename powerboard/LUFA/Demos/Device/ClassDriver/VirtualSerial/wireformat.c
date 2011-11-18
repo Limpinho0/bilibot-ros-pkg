@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-int packet_decoded(int8_t byte, packet_t* pkt, status_t* status)
+int packet_decoded(uint8_t byte, packet_t* pkt, status_t* status)
 {
     if (status->recvd == 0 && byte == HEADER_BYTE0) 
     {
@@ -69,7 +69,7 @@ int packet_decoded(int8_t byte, packet_t* pkt, status_t* status)
     return STATUS_INCOMPLETE;
 }
 
-packet_t* create_packet(int8_t type, int8_t seq, int8_t* payload, int8_t len)
+packet_t* create_packet(uint8_t type, uint8_t seq, uint8_t* payload, uint8_t len)
 {
     packet_t* pkt = (packet_t*)malloc(sizeof(packet_t));
     pkt->header[0] = HEADER_BYTE0; // 'h'
@@ -79,7 +79,7 @@ packet_t* create_packet(int8_t type, int8_t seq, int8_t* payload, int8_t len)
     pkt->type = type;
     pkt->seq = seq;
     pkt->len = len + 9;
-    int16_t ck = HEADER_BYTE0 + 
+    uint16_t ck = HEADER_BYTE0 + 
              HEADER_BYTE1 + 
              HEADER_BYTE2 +  
              HEADER_BYTE3 +
@@ -93,9 +93,9 @@ packet_t* create_packet(int8_t type, int8_t seq, int8_t* payload, int8_t len)
     return pkt;
 }
 
-int8_t valid_checksum(packet_t* pkt)
+uint8_t valid_checksum(packet_t* pkt)
 {
-    int16_t ck = HEADER_BYTE0 + 
+    uint16_t ck = HEADER_BYTE0 + 
              HEADER_BYTE1 + 
              HEADER_BYTE2 +  
              HEADER_BYTE3 +
@@ -103,13 +103,13 @@ int8_t valid_checksum(packet_t* pkt)
     for(int i = 0; i < pkt->len - 9; i++)
         ck += pkt->payload[i];
 
-    int16_t pkt_ck = (pkt->ck_high << 8) + pkt->ck_low;
+    uint16_t pkt_ck = (pkt->ck_high << 8) + pkt->ck_low;
     if (ck != pkt_ck)
         return -1;
     return 1;
 }
 
-int8_t packet_to_buffer(packet_t* pkt, int8_t* buffer)
+uint8_t packet_to_buffer(packet_t* pkt, uint8_t* buffer)
 {
     int i = 0;
     for(; i < 4; i++)
