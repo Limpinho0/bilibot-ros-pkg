@@ -96,9 +96,10 @@ void transmitstring(char *tx, int len){
 
 
 
+int MOTOR_DIR_MSK;
 
-
-
+#define MOTOR_DIR_UP 0x1
+#define MOTOR_DIR_DN 0x2
 
 void runTest1(){
   struct Note n1;  n1.pitch=12; n1.dur=500;
@@ -138,21 +139,18 @@ void parseCommand(uint8_t c){
 
 
 
-
-
+#define ULIMIT_VAL (((0xff&READ_ULIMIT)>>7)^1)
+#define LLIMIT_VAL (((0xff&READ_LLIMIT)>>6)^1)
 
 #ifdef USING_ADC
 
 void printADC(){
   uint16_t pot = ADC_BASE_POT;
   // if we just want a bit from the limits, the READ_LLIMIT should probably include the shift?
-  stransmitf("%3u %3u %3u %3u %7i %3u %3u\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR,lastspeed, 
-							((0xff&READ_ULIMIT)>>7)^1, ((0xff&READ_LLIMIT)>>6)^1);
-  
+  stransmitf("%3u %3u %3u %3u %7i %3u %3u %3u\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR,lastspeed, ULIMIT_VAL, LLIMIT_VAL, MOTOR_DIR_MSK); 
 }
 
 #endif
-
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
@@ -166,6 +164,20 @@ int main(void)
 	CDC_Device_CreateStream(&VirtualSerial_CDC_Interface, &USBSerialStream);
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
+
+	// enable interrupts on INT6 & INT7
+	EIMSK |= (1<<INT7);
+	EIMSK |= (1<<INT6);
+
+	// trigger INT7 on logic change
+	EICRB &= ~(1<<ISC71);
+	EICRB |= (1<<ISC70);
+	// trigger INT6 on logic change
+	EICRB &= ~(1<<ISC61);
+	EICRB |= (1<<ISC60);
+
+	MOTOR_DIR_MSK = MOTOR_DIR_UP | MOTOR_DIR_DN;
+
 	sei();
 
 //		  LEDs_ToggleLEDs(LEDS_LED2);
@@ -209,6 +221,22 @@ int main(void)
 ISR(TIMER1_OVF_vect, ISR_BLOCK)
 {
 // 	LEDs_ToggleLEDs(LEDS_LED1);
+}
+
+ISR(INT7_vect)
+{
+	if (ULIMIT_VAL == 1)
+		MOTOR_DIR_MSK &= ~MOTOR_DIR_UP;
+	if (ULIMIT_VAL == 0)
+		MOTOR_DIR_MSK |= MOTOR_DIR_UP;
+}
+
+ISR(INT6_vect)
+{
+	if (LLIMIT_VAL == 1)
+		MOTOR_DIR_MSK &= ~MOTOR_DIR_DN;
+	if (LLIMIT_VAL == 0)
+		MOTOR_DIR_MSK |= MOTOR_DIR_DN;
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
