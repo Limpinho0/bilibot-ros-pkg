@@ -225,16 +225,20 @@ ISR(TIMER1_OVF_vect, ISR_BLOCK)
 
 ISR(INT7_vect)
 {
-	if (ULIMIT_VAL == 1)
+	if (ULIMIT_VAL == 1) {
 		MOTOR_DIR_MSK &= ~MOTOR_DIR_UP;
+		HL_BaseSpeed(0);
+	}
 	if (ULIMIT_VAL == 0)
 		MOTOR_DIR_MSK |= MOTOR_DIR_UP;
 }
 
 ISR(INT6_vect)
 {
-	if (LLIMIT_VAL == 1)
+	if (LLIMIT_VAL == 1) {
 		MOTOR_DIR_MSK &= ~MOTOR_DIR_DN;
+		HL_BaseSpeed(0);
+	}
 	if (LLIMIT_VAL == 0)
 		MOTOR_DIR_MSK |= MOTOR_DIR_DN;
 }
