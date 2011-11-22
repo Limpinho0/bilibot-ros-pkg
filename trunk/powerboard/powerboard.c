@@ -53,22 +53,6 @@ void transmitstring(char *tx, int len){
 		sendByte(tx[i]);
 }
 
-int MOTOR_DIR_MSK;
-
-#define MOTOR_DIR_UP 0x1
-#define MOTOR_DIR_DN 0x2
-
-void runTest1(){
-  struct Note n1;  n1.pitch=12; n1.dur=500;
-  setNote(n1);
-  uint8_t result = testMotors();
-  if(result)
-    failSong();
-  stransmitf("motor test curr = %u\r\n",result);
-  
-}
-
-
 void parseCommand(uint8_t c){
   if(c=='C'){
       Toggle_CREATE_PWR_EN;
@@ -79,25 +63,18 @@ void parseCommand(uint8_t c){
   if(c=='M'){
       shortsong1();
   }
-  if(c=='t'){
-      runTest1();
-  }
   if(c=='f'){
       failSong();
   }
   
 #ifdef SIMPLEMOTOR
   
-  if(c == 'Y' || c=='H' || c=='T' || c=='y'|| c=='h'|| c=='G'|| c=='g' || c=='s' || c=='S' || c=='q' || c=='a')
-    setMotorMove(c);
+  //if(c == 'Y' || c=='H' || c=='T' || c=='y'|| c=='h'|| c=='G'|| c=='g' || c=='s' || c=='S' || c=='q' || c=='a')
+   // setMotorMove(c);
 #endif  
   
 }
 
-
-
-#define ULIMIT_VAL (((0xff&READ_ULIMIT)>>7)^1)
-#define LLIMIT_VAL (((0xff&READ_LLIMIT)>>6)^1)
 
 #ifdef USING_ADC
 
@@ -117,44 +94,21 @@ int main(void)
 	SetupHardware();
 
 	uint16_t counter=0;
+
 	/* Create a regular character stream for the interface so that it can be used with the stdio.h functions */
 	CDC_Device_CreateStream(&VirtualSerial_CDC_Interface, &USBSerialStream);
 
 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
 
-	// enable interrupts on INT6 & INT7
-	EIMSK |= (1<<INT7);
-	EIMSK |= (1<<INT6);
+    sei();
 
-	// trigger INT7 on logic change
-	EICRB &= ~(1<<ISC71);
-	EICRB |= (1<<ISC70);
-	// trigger INT6 on logic change
-	EICRB &= ~(1<<ISC61);
-	EICRB |= (1<<ISC60);
-
-	MOTOR_DIR_MSK = MOTOR_DIR_UP | MOTOR_DIR_DN;
-
-	if (ULIMIT_VAL == 1) 
-		MOTOR_DIR_MSK &= ~MOTOR_DIR_UP;
-	if (LLIMIT_VAL == 1) 
-		MOTOR_DIR_MSK &= ~MOTOR_DIR_DN;
-
-	sei();
-
-//		  LEDs_ToggleLEDs(LEDS_LED2);
-		CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
-		CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
-		USB_USBTask();
-		_delay_ms(1);
-		  LEDs_ToggleLEDs(LEDS_LED2);
-	for (;;)
-	{
-//		CheckJoystickMovement();
-
-		/* Must throw away unused bytes from the host, or it will lock up while waiting for the device */
-//		CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
-		/* Echo all received data on the  CDC interface */
+    CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
+    CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
+    USB_USBTask();
+    _delay_ms(1);
+    LEDs_ToggleLEDs(LEDS_LED2);
+    for (;;)
+    {
 		int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
 		if (!(ReceivedByte < 0)){
 		  CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (uint8_t)ReceivedByte);
@@ -167,13 +121,9 @@ int main(void)
 		   sendtoMid(); 
 		if(counter>100){
 		  LEDs_ToggleLEDs(LEDS_LED2);
-// 		  OCR0A++;
 		  #ifdef USING_ADC
 		  printADC();
 		  #endif
-// 		  stransmitf("hello world");
-// 		  
-		  simpleMotorCheck();
 		  counter=0;
 		}
 	}
@@ -185,54 +135,25 @@ ISR(TIMER1_OVF_vect, ISR_BLOCK)
 // 	LEDs_ToggleLEDs(LEDS_LED1);
 }
 
-ISR(INT7_vect)
-{
-	if (ULIMIT_VAL == 1) {
-		MOTOR_DIR_MSK &= ~MOTOR_DIR_UP;
-		HL_BaseSpeed(0);
-	}
-	if (ULIMIT_VAL == 0)
-		MOTOR_DIR_MSK |= MOTOR_DIR_UP;
-}
-
-ISR(INT6_vect)
-{
-	if (LLIMIT_VAL == 1) {
-		MOTOR_DIR_MSK &= ~MOTOR_DIR_DN;
-		HL_BaseSpeed(0);
-	}
-	if (LLIMIT_VAL == 0)
-		MOTOR_DIR_MSK |= MOTOR_DIR_DN;
-}
-
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
 {
-SETUP_CREATE_PWR_EN;
-SETUP_KIN_EN;
-h_KIN_EN;
-SETUP_ULIMIT;
-Toggle_ULIMIT;
-SETUP_LLIMIT;
-Toggle_LLIMIT;
+    SETUP_CREATE_PWR_EN;
+    SETUP_KIN_EN;
+    h_KIN_EN;
+    SETUP_ULIMIT;
+    SETUP_LLIMIT;
+    EN_ULIMIT_ISR;
+    EN_LLIMIT_ISR;
 
+    setupMotors();
+    setupADC();
 
-#ifdef SIMPLEMOTOR
-  setupMotors();
-//   setupHandOsc();
-#endif
-#ifdef USING_ADC
-setupADC();
-  //start next adc read:
-   ADCSRA |= 0x40;
-#endif
+    //start next adc read:
+    ADCSRA |= 0x40;
    
-setupMusic();   
+    setupMusic();   
    
-	/* Disable watchdog if enabled by bootloader/fuses */
-//	MCUSR &= ~(1 << WDRF);
-//	wdt_disable();
-
 	/* Disable clock division */
 	clock_prescale_set(clock_div_1);
 
