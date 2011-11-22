@@ -42,10 +42,10 @@ ISR(INT6_vect)
         MOTOR_DIR_MSK |= MOTOR_DIR_DN;
 }     
     
-    
 void HL_BaseSpeed(int16_t spd){
     if ((spd > 0 && ((MOTOR_DIR_MSK & MOTOR_DIR_UP) == MOTOR_DIR_UP)) ||
-        (spd < 0 && ((MOTOR_DIR_MSK & MOTOR_DIR_DN) == MOTOR_DIR_DN)))
+        (spd < 0 && ((MOTOR_DIR_MSK & MOTOR_DIR_DN) == MOTOR_DIR_DN)) ||
+         spd == 0)
     {
         lastspeed=spd;
         setBaseSpeed(spd);

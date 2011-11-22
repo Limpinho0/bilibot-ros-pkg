@@ -67,12 +67,10 @@ void parseCommand(uint8_t c){
       failSong();
   }
   
-#ifdef SIMPLEMOTOR
-  
-  //if(c == 'Y' || c=='H' || c=='T' || c=='y'|| c=='h'|| c=='G'|| c=='g' || c=='s' || c=='S' || c=='q' || c=='a')
-   // setMotorMove(c);
-#endif  
-  
+    if(c == 'Y')
+        HL_BaseSpeed(32767);
+    if(c == 'H')
+        HL_BaseSpeed(-32767);
 }
 
 
