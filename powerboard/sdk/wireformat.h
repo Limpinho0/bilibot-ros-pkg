@@ -45,14 +45,14 @@ uint8_t state;
 
 // call for each byte in serial stream,
 // returns 1 if valid packet is built from stream, 0 otherwise
-int packet_decoded(uint8_t byte, packet_t* pkt, status_t* status);
+int PKT_Decoded(uint8_t byte, packet_t* pkt, status_t* status);
 
 // builds a packet given a payload, type and seq #
-packet_t* create_packet(uint8_t type, uint8_t seq, uint8_t* payload, uint8_t len);
+packet_t* PKT_Create(uint8_t type, uint8_t seq, uint8_t* payload, uint8_t len);
 
 // turns a packet into an array of bytes
-uint8_t packet_to_buffer(packet_t* pkt, uint8_t* buffer);
+uint8_t PKT_ToBuffer(packet_t* pkt, uint8_t* buffer);
 
-uint8_t valid_checksum(packet_t* pkt);
+uint8_t PKT_ValidChecksum(packet_t* pkt);
 
 #endif //WIREFORMAT_H

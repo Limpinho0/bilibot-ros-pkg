@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-int packet_decoded(uint8_t byte, packet_t* pkt, status_t* status)
+int PKT_Decoded(uint8_t byte, packet_t* pkt, status_t* status)
 {
     if (status->recvd == 0 && byte == HEADER_BYTE0) 
     {
@@ -50,7 +50,7 @@ int packet_decoded(uint8_t byte, packet_t* pkt, status_t* status)
     else if (status->recvd == pkt->len - 1) 
     {
         pkt->ck_low = byte;
-        if (valid_checksum(pkt) == 1) {
+        if (PKT_ValidChecksum(pkt) == 1) {
 	    status->state = STATUS_COMPLETE;
 	    return STATUS_COMPLETE;
         }
@@ -69,7 +69,7 @@ int packet_decoded(uint8_t byte, packet_t* pkt, status_t* status)
     return STATUS_INCOMPLETE;
 }
 
-packet_t* create_packet(uint8_t type, uint8_t seq, uint8_t* payload, uint8_t len)
+packet_t* PKT_Create(uint8_t type, uint8_t seq, uint8_t* payload, uint8_t len)
 {
     packet_t* pkt = (packet_t*)malloc(sizeof(packet_t));
     pkt->header[0] = HEADER_BYTE0; // 'h'
@@ -93,7 +93,7 @@ packet_t* create_packet(uint8_t type, uint8_t seq, uint8_t* payload, uint8_t len
     return pkt;
 }
 
-uint8_t valid_checksum(packet_t* pkt)
+uint8_t PKT_ValidChecksum(packet_t* pkt)
 {
     uint16_t ck = HEADER_BYTE0 + 
              HEADER_BYTE1 + 
@@ -109,7 +109,7 @@ uint8_t valid_checksum(packet_t* pkt)
     return 1;
 }
 
-uint8_t packet_to_buffer(packet_t* pkt, uint8_t* buffer)
+uint8_t PKT_ToBuffer(packet_t* pkt, uint8_t* buffer)
 {
     int i = 0;
     for(; i < 4; i++)
