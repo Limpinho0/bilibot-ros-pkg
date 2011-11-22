@@ -2,13 +2,13 @@
 #ifndef PINMAPPING_H	
 #define PINMAPPING_H			
 //Atmel pin 1, labeled PE6, is connected to the base lower limit.  The suffix for this pin is: LLIMIT.  It has the following defines: 	
-#define SETUP_LLIMIT  DDRE &= 0xBF	
+#define SETUP_LLIMIT  {DDRE &= 0xBF; Toggle_LLIMIT;}
 #define  h_LLIMIT PORTE |= 0x40	
 #define  l_LLIMIT PORTE &= 0xBF	
 #define READ_LLIMIT  PINE & 0x40	
 #define Toggle_LLIMIT  PORTE ^= 0x40
 //Atmel pin 2, labeled PE7, is connected to the base upper limit.  The suffix for this pin is: ULIMIT.  It has the following defines: 	
-#define SETUP_ULIMIT  DDRE &= 0x7F	
+#define SETUP_ULIMIT  {DDRE &= 0x7F; Toggle_ULIMIT;}
 #define  h_ULIMIT PORTE |= 0x80	
 #define  l_ULIMIT PORTE &= 0x7F	
 #define READ_ULIMIT  PINE & 0x80	
@@ -202,5 +202,11 @@
 #define  l_CHRG_S_A PORTF &= 0xFE	
 #define READ_CHRG_S_A  PINF & 0x01	
 #define Toggle_CHRG_S_A  PORTF ^= 0x01
+
+#define ULIMIT_VAL (((0xff&READ_ULIMIT)>>7)^1)
+#define LLIMIT_VAL (((0xff&READ_LLIMIT)>>6)^1)
+
+#define EN_ULIMIT_ISR {EIMSK |= (1<<INT7); EICRB &= ~(1<<ISC71); EICRB |= (1<<ISC70);}
+#define EN_LLIMIT_ISR {EIMSK |= (1<<INT6); EICRB &= ~(1<<ISC61); EICRB |= (1<<ISC60);}
 
 #endif					
