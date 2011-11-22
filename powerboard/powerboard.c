@@ -71,6 +71,8 @@ void parseCommand(uint8_t c){
         HL_BaseSpeed(32767);
     if(c == 'H')
         HL_BaseSpeed(-32767);
+    if(c == 'P')
+        HL_SetBasePosition(128);
 }
 
 
@@ -79,7 +81,7 @@ void parseCommand(uint8_t c){
 void printADC(){
   uint16_t pot = ADC_BASE_POT;
   // if we just want a bit from the limits, the READ_LLIMIT should probably include the shift?
-  stransmitf("%3u %3u %3u %3u %7i %3u %3u %3u\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR,lastspeed, ULIMIT_VAL, LLIMIT_VAL, MOTOR_DIR_MSK); 
+  stransmitf("%3u %3u %3u %3u %7i %3u %3u %3u\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR,HL_GetLastSpeed(), ULIMIT_VAL, LLIMIT_VAL, MOTOR_DIR_MSK); 
 }
 
 #endif
@@ -116,6 +118,7 @@ int main(void)
 		USB_USBTask();
 		_delay_ms(1);
 		counter++;
+        HL_CheckBasePosition();
 		if(counter>100){
 		  LEDs_ToggleLEDs(LEDS_LED2);
 		  #ifdef USING_ADC
