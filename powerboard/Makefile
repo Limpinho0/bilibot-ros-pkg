@@ -40,7 +40,7 @@
 
 
 # MCU name
-MCU = usb1287 
+MCU = at90usb1287
 
 
 # Target architecture (see library "Board Types" documentation).
