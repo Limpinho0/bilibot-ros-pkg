@@ -71,6 +71,7 @@ int PKT_Decoded(uint8_t byte, packet_t* pkt, status_t* status)
 
 packet_t* PKT_Create(uint8_t type, uint8_t seq, uint8_t* payload, uint8_t len)
 {
+    int i;
     packet_t* pkt = (packet_t*)malloc(sizeof(packet_t));
     pkt->header[0] = HEADER_BYTE0; // 'h'
     pkt->header[1] = HEADER_BYTE1; // 'e' 
@@ -84,7 +85,7 @@ packet_t* PKT_Create(uint8_t type, uint8_t seq, uint8_t* payload, uint8_t len)
              HEADER_BYTE2 +  
              HEADER_BYTE3 +
              pkt->type + pkt->seq + pkt->len;
-    for(int i = 0; i < len; i++)
+    for(i = 0; i < len; i++)
         ck += payload[i];
 
     pkt->ck_high = ck >> 8 & 0x00ff; // first byte of checksum
@@ -95,12 +96,13 @@ packet_t* PKT_Create(uint8_t type, uint8_t seq, uint8_t* payload, uint8_t len)
 
 uint8_t PKT_ValidChecksum(packet_t* pkt)
 {
+    int i;
     uint16_t ck = HEADER_BYTE0 + 
              HEADER_BYTE1 + 
              HEADER_BYTE2 +  
              HEADER_BYTE3 +
              pkt->type + pkt->seq + pkt->len;
-    for(int i = 0; i < pkt->len - 9; i++)
+    for(i = 0; i < pkt->len - 9; i++)
         ck += pkt->payload[i];
 
     uint16_t pkt_ck = (pkt->ck_high << 8) + pkt->ck_low;
