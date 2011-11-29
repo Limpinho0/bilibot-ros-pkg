@@ -8,12 +8,12 @@ int PKT_Decoded(uint8_t byte, packet_t* pkt, status_t* status)
     if (status->recvd == 0 && byte == HEADER_BYTE0) 
     {
         pkt->header[0] = byte;
-        status->state = STATUS_INCOMPLETE;
+        status->state = DECODE_STATUS_INCOMPLETE;
     }
     else if (status->recvd == 0 && byte != HEADER_BYTE0)
     {
-        status->state = STATUS_INCOMPLETE;
-        return STATUS_INCOMPLETE;
+        status->state = DECODE_STATUS_INCOMPLETE;
+        return DECODE_STATUS_INCOMPLETE;
     }
     else if (status->recvd == 1 && byte == HEADER_BYTE1) 
     {
@@ -51,22 +51,22 @@ int PKT_Decoded(uint8_t byte, packet_t* pkt, status_t* status)
     {
         pkt->ck_low = byte;
         if (PKT_ValidChecksum(pkt) == 1) {
-	    status->state = STATUS_COMPLETE;
-	    return STATUS_COMPLETE;
+	    status->state = DECODE_STATUS_COMPLETE;
+	    return DECODE_STATUS_COMPLETE;
         }
         else 
         {
-            status->state = STATUS_INVALID;
-            return STATUS_INVALID;
+            status->state = DECODE_STATUS_INVALID;
+            return DECODE_STATUS_INVALID;
         }
     } else 
     {
-        status->state = STATUS_INVALID;
-        return STATUS_INVALID;
+        status->state = DECODE_STATUS_INVALID;
+        return DECODE_STATUS_INVALID;
     }
         
     status->recvd++;
-    return STATUS_INCOMPLETE;
+    return DECODE_STATUS_INCOMPLETE;
 }
 
 packet_t* PKT_Create(uint8_t type, uint8_t seq, uint8_t* payload, uint8_t len)

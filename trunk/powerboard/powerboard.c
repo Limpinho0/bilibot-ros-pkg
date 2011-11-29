@@ -78,10 +78,25 @@ void parseCommand(uint8_t c){
 
 #ifdef USING_ADC
 
-void printADC(){
-  uint16_t pot = ADC_BASE_POT;
-  // if we just want a bit from the limits, the READ_LLIMIT should probably include the shift?
-  stransmitf("%3u %3u %3u %3u %7i %3u %3u %3u\r\n", pot, ADC_GYRO, ADC_BASE_CURR, ADC_HAND_CURR,HL_GetLastSpeed(), ULIMIT_VAL, LLIMIT_VAL, MOTOR_DIR_MSK); 
+uint8_t seq;
+uint8_t* txBuffer;
+
+void transmitPackets(){
+    uint8_t payload[6];
+
+    // fill in payload
+    payload[0] = ADC_BASE_POT;
+    payload[1] = HL_GetTargetPos();
+    payload[2] = HL_GetTargetSpeed();
+    payload[3] = HL_GetLimitState();
+    payload[4] = ADC_BASE_CURR;
+    payload[5] = ADC_HAND_CURR;
+
+    packet_t* pkt = PKT_Create(PKTYPE_STATUS_ARM_STATE, seq++, payload, 6);
+    uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
+    for(int i=0; i < len; i++) 
+        sendByte(txBuffer[i]);
+    free(pkt);
 }
 
 #endif
@@ -93,7 +108,9 @@ int main(void)
 {
 	SetupHardware();
 
-	uint16_t counter=0;
+    uint8_t counter=0;
+    seq = 0;
+    txBuffer = (uint8_t*)malloc(sizeof(packet_t));
 
 	/* Create a regular character stream for the interface so that it can be used with the stdio.h functions */
 	CDC_Device_CreateStream(&VirtualSerial_CDC_Interface, &USBSerialStream);
@@ -122,7 +139,7 @@ int main(void)
 		if(counter>100){
 		  LEDs_ToggleLEDs(LEDS_LED2);
 		  #ifdef USING_ADC
-		  printADC();
+		  transmitPackets();
 		  #endif
 		  counter=0;
 		}

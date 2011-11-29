@@ -3,16 +3,14 @@
 
 #include <stdint.h>
 
-#define MAX_PAYLOAD 5
+#define MAX_PAYLOAD 255
 
-#define TYPE_STATUS_HEARTBEAT	0x00
-#define TYPE_STATUS_ARM_POS	0x01
-#define TYPE_STATUS_HAND_POS	0x02
-#define TYPE_STATUS_ARM_LLIM	0x03
-#define TYPE_STATUS_ARM_ULIM	0x04
-#define TYPE_STATUS_GYRO_RAW	0x05
-#define TYPE_CMD_ARM_POS 	0x80
-#define TYPE_CMD_HAND_POS	0x81
+#define PKTYPE_STATUS_HEARTBEAT 0x00
+#define PKTYPE_STATUS_ARM_STATE 0x01
+#define PKTYPE_STATUS_GYRO_RAW	0x02
+#define PKTYPE_CMD_SET_ARM_POS  0x80
+#define PKTYPE_CMD_SET_HAND_POS 0x81
+#define PKTYPE_CMD_ZERO_GYRO    0x82
 
 #define HEADER_BYTE0 0x68
 #define HEADER_BYTE1 0x65
@@ -22,25 +20,24 @@
 typedef struct _packet_t packet_t;
 struct _packet_t
 {
-uint8_t     header[4];		 // header used for seeking
-uint8_t     len;			 // length of entire packet in bytes
-uint8_t     seq;			 // sequence number (for error tracking)
-uint8_t     type;		 // packet id 
-uint8_t     payload[MAX_PAYLOAD]; // payload data
-uint8_t     ck_high;		 // first byte of checksum
-uint8_t     ck_low;		 // second byte of checksum
+    uint8_t header[4];		 // header used for seeking
+    uint8_t len;			 // length of entire packet in bytes
+    uint8_t seq;			 // sequence number (for error tracking)
+    uint8_t type;		 // packet id 
+    uint8_t payload[MAX_PAYLOAD]; // payload data
+    uint8_t ck_high;		 // first byte of checksum
+    uint8_t ck_low;		 // second byte of checksum
 };
 
-
-#define STATUS_COMPLETE 1 
-#define STATUS_INCOMPLETE 0	
-#define STATUS_INVALID -1	
+#define DECODE_STATUS_COMPLETE 1 
+#define DECODE_STATUS_INCOMPLETE 0	
+#define DECODE_STATUS_INVALID -1	
 
 typedef struct _status_t status_t;
 struct _status_t
 {
-uint8_t recvd;
-uint8_t state;
+    uint8_t recvd;
+    uint8_t state;
 };
 
 // call for each byte in serial stream,
