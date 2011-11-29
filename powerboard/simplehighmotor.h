@@ -3,7 +3,7 @@
 #include "lowlevelmotor.h"
 #include "adc.h"
 
-int16_t _lastSpeed;
+int16_t _targetSpeed;
 uint8_t _targetPosition;
 
 int MOTOR_DIR_MSK;
@@ -52,7 +52,7 @@ void HL_BaseSpeed(int16_t spd){
         (spd < 0 && ((MOTOR_DIR_MSK & MOTOR_DIR_DN) == MOTOR_DIR_DN)) ||
          spd == 0)
     {
-        _lastSpeed=spd;
+        _targetSpeed=spd;
         setBaseSpeed(spd);
     }
 }
@@ -70,9 +70,24 @@ void HL_SetBasePosition(int8_t position)
     _targetPosition = position;
 }
 
-uint16_t HL_GetLastSpeed()
+uint16_t HL_GetTargetSpeed()
 {
-    return _lastSpeed;
+    return _targetSpeed;
+}
+
+uint8_t HL_GetTargetPos()
+{
+    return _targetPosition;
+}
+
+uint8_t HL_GetLimitState()
+{
+    uint8_t state = 0;
+    if (ULIMIT_VAL == 1) 
+        state |= 0x2;
+    if (LLIMIT_VAL == 1) 
+        state |= 0x1;
+    return state;
 }
 
 void HL_CheckBasePosition()
