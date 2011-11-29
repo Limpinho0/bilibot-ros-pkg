@@ -90,7 +90,7 @@ uint8_t HL_GetLimitState()
     return state;
 }
 
-void HL_CheckBasePosition()
+void HL_UpdateState()
 {
     if (abs(ADC_BASE_POT-_targetPosition) <= MOTOR_POS_ERR)  
         HL_BaseSpeed(0);
