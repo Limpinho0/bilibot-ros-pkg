@@ -1,0 +1,15 @@
+<package>
+  <description brief="bilibot_node">
+
+     bilibot_node
+
+  </description>
+  <author>Jeff</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/bilibot_node</url>
+
+  <depend package="roscpp"/>
+</package>
+
+
