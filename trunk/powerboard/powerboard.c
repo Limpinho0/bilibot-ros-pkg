@@ -5,6 +5,7 @@
 #include "adc.h"
 #include "simplehighmotor.h"
 #include "music.h"
+#include <stdlib.h>
 
 /** LUFA CDC Class driver interface configuration and state information. This structure is
  *  passed to all CDC Class driver functions, so that multiple instances of the same class
@@ -75,13 +76,10 @@ void parseCommand(uint8_t c){
         HL_SetBasePosition(128);
 }
 
-
-#ifdef USING_ADC
-
 uint8_t seq;
 uint8_t* txBuffer;
 
-void transmitPackets(){
+void transmitArmState(){
     uint8_t payload[6];
 
     // fill in payload
@@ -99,7 +97,18 @@ void transmitPackets(){
     free(pkt);
 }
 
-#endif
+void transmitGyroState(){
+    uint8_t payload[1];
+
+    // fill in payload
+    payload[0] = ADC_GYRO;
+
+    packet_t* pkt = PKT_Create(PKTYPE_STATUS_ARM_STATE, seq++, payload, 1);
+    uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
+    for(int i=0; i < len; i++) 
+        sendByte(txBuffer[i]);
+    free(pkt);
+}
 
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
@@ -135,11 +144,12 @@ int main(void)
 		USB_USBTask();
 		_delay_ms(1);
 		counter++;
-        HL_CheckBasePosition();
+        HL_UpdateState();
 		if(counter>100){
 		  LEDs_ToggleLEDs(LEDS_LED2);
 		  #ifdef USING_ADC
-		  transmitPackets();
+		  transmitArmState();
+		  transmitGyroState();
 		  #endif
 		  counter=0;
 		}
