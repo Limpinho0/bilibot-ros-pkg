@@ -147,12 +147,10 @@ int main(void)
         HL_UpdateState();
 		if(counter>100){
 		  LEDs_ToggleLEDs(LEDS_LED2);
-		  #ifdef USING_ADC
-		  transmitArmState();
-		  transmitGyroState();
-		  #endif
 		  counter=0;
 		}
+		  transmitArmState();
+		  transmitGyroState();
 	}
 }
 
