@@ -1,9 +1,0 @@
-<stack>
-  <description brief="bilibot">bilibot</description>
-  <author>Maintained by garratt</author>
-  <license>BSD</license>  
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/bilibot</url>
-  <depend stack="ros" />
-
-</stack>
