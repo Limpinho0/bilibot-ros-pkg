@@ -31,7 +31,7 @@ struct _packet_t
 
 #define DECODE_STATUS_COMPLETE 1 
 #define DECODE_STATUS_INCOMPLETE 0	
-#define DECODE_STATUS_INVALID -1	
+#define DECODE_STATUS_INVALID 2
 
 typedef struct _status_t status_t;
 struct _status_t
