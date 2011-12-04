@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "ros/ros.h"
 #include "std_msgs/String.h"
+#include "std_msgs/UInt8.h"
 #include "serial.h"
 
 extern "C" {
@@ -18,7 +19,7 @@ int main(int argc, char **argv)
     packet_t pkt;
     status_t status;
     status.recvd = 0;
-    std_msgs::String msg;
+    std_msgs::UInt8 msg;
 
     if (serial->openPort() < 0) {
         printf("unable to open port\n");
@@ -29,26 +30,24 @@ int main(int argc, char **argv)
 
     ros::NodeHandle n;
 
-    ros::Publisher pub = n.advertise<std_msgs::String>("/status", 1);
+    ros::Publisher pub = n.advertise<std_msgs::UInt8>("/status", 1);
 
-    // COMMS THROUGH EXTERNAL UART PORT (XBee serial)
     while(ros::ok())
     {
         uint8_t byte = serial->readByte();
-        std::stringstream ss;
 
         if(PKT_Decoded(byte, &pkt, &status) != DECODE_STATUS_INCOMPLETE) {
             switch(status.state)
             {
             case DECODE_STATUS_COMPLETE: 
-                ss << "good packet: " << pkt.payload[0];
-                msg.data = ss.str();
+               msg.data = pkt.payload[0];
                 pub.publish(msg);
-                break;
-            case DECODE_STATUS_INVALID: 
-                ss << "bad packets: " << packet_drops++;
+                status.recvd = 0;
                 break;
             default:
+                if (status.recvd > 0)
+                    ROS_WARN("dropped packets so far: %d", ++packet_drops);
+                status.recvd = 0;
                 break;
             }
         }
@@ -62,7 +61,6 @@ int main(int argc, char **argv)
 
 void send_packet(Serial* serial, packet_t* pkt)
 {
-  uint16_t i;
   serial->writeByte(0);
 }
 
