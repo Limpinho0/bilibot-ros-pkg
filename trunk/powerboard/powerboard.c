@@ -90,10 +90,13 @@ void transmitArmState(){
     payload[4] = ADC_BASE_CURR;
     payload[5] = ADC_HAND_CURR;
 
+    CDC_Device_Flush(&VirtualSerial_CDC_Interface);
     packet_t* pkt = PKT_Create(PKTYPE_STATUS_ARM_STATE, seq++, payload, 6);
     uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
-    for(int i=0; i < len; i++) 
+    for(int i=0; i < len; i++) {
         sendByte(txBuffer[i]);
+        handleUSB();
+    }
     free(pkt);
 }
 
@@ -103,10 +106,13 @@ void transmitGyroState(){
     // fill in payload
     payload[0] = ADC_GYRO;
 
+    CDC_Device_Flush(&VirtualSerial_CDC_Interface);
     packet_t* pkt = PKT_Create(PKTYPE_STATUS_ARM_STATE, seq++, payload, 1);
     uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
-    for(int i=0; i < len; i++) 
+    for(int i=0; i < len; i++) {
         sendByte(txBuffer[i]);
+        handleUSB();
+    }
     free(pkt);
 }
 
@@ -117,7 +123,7 @@ int main(void)
 {
 	SetupHardware();
 
-    uint8_t counter=0;
+    uint16_t counter=0;
     seq = 0;
     txBuffer = (uint8_t*)malloc(sizeof(packet_t));
 
@@ -131,28 +137,36 @@ int main(void)
     CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
     CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
     USB_USBTask();
-    _delay_ms(1);
     LEDs_ToggleLEDs(LEDS_LED2);
+
     for (;;)
     {
 		int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
 		if (!(ReceivedByte < 0)){
-		  CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (uint8_t)ReceivedByte);
-		  parseCommand((uint8_t)ReceivedByte);
+            //CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (uint8_t)ReceivedByte);
+            // parseCommand((uint8_t)ReceivedByte);
 		}
-		CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
-		USB_USBTask();
-		_delay_ms(1);
-		counter++;
+
         HL_UpdateState();
-		if(counter>100){
-		  LEDs_ToggleLEDs(LEDS_LED2);
-		  counter=0;
+
+		if(counter > 10000){
+            LEDs_ToggleLEDs(LEDS_LED2);
+            counter = 0;
+            transmitArmState();
+            transmitGyroState();
 		}
-		  transmitArmState();
-		  transmitGyroState();
+
+        handleUSB();
+		counter++;
 	}
 }
+
+void handleUSB(void)
+{
+    CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
+    USB_USBTask();
+}
+    
 
 /** ISR to periodically toggle the LEDs on the board to indicate that the bootloader is active. */
 ISR(TIMER1_OVF_vect, ISR_BLOCK)
