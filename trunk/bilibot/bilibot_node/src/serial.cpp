@@ -22,7 +22,7 @@ int Serial::openPort()
 {
     struct termios options;
 
-    this->fd = open(this->device.c_str(), O_RDWR);
+    this->fd = open(this->device.c_str(), O_RDWR | O_NOCTTY);
 
     if (this->fd == -1 )
     {
@@ -37,11 +37,20 @@ int Serial::openPort()
         cfsetospeed(&options, B115200);
 
         // 8N1
+        //options.c_cflag &= ~PARENB; // no parity
+        //options.c_cflag &= ~CSTOPB; 
+        //options.c_cflag &= ~CSIZE; 
+        //options.c_cflag |= CS8;
+        options.c_cflag = CS8 | CLOCAL | CREAD;
         options.c_cflag &= ~PARENB; // no parity
         options.c_cflag &= ~CSTOPB; 
         options.c_cflag &= ~CSIZE; 
-        options.c_cflag |= CS8;
+        options.c_iflag = IGNPAR;
+        options.c_oflag = 0;
+        options.c_lflag = 0;
 
+
+        tcflush(this->fd, TCIFLUSH);
         tcsetattr(this->fd, TCSANOW, &options);
 
         return 0;
