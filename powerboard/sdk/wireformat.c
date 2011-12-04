@@ -51,8 +51,8 @@ int PKT_Decoded(uint8_t byte, packet_t* pkt, status_t* status)
     {
         pkt->ck_low = byte;
         if (PKT_ValidChecksum(pkt) == 1) {
-	    status->state = DECODE_STATUS_COMPLETE;
-	    return DECODE_STATUS_COMPLETE;
+            status->state = DECODE_STATUS_COMPLETE;
+            return DECODE_STATUS_COMPLETE;
         }
         else 
         {
