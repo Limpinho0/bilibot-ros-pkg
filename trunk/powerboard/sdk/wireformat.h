@@ -5,17 +5,18 @@
 
 #define MAX_PAYLOAD 255
 
-#define PKTYPE_STATUS_HEARTBEAT 0x00
-#define PKTYPE_STATUS_ARM_STATE 0x01
-#define PKTYPE_STATUS_GYRO_RAW	0x02
-#define PKTYPE_CMD_SET_ARM_POS  0x80
-#define PKTYPE_CMD_SET_HAND_POS 0x81
-#define PKTYPE_CMD_ZERO_GYRO    0x82
+#define PKTYPE_STATUS_HEARTBEAT  0x00
+#define PKTYPE_STATUS_ARM_STATE  0x01
+#define PKTYPE_STATUS_GYRO_RAW	 0x02
+#define PKTYPE_CMD_SET_ARM_POS   0x80
+#define PKTYPE_CMD_SET_HAND_POS  0x81
+#define PKTYPE_CMD_SET_PWR_STATE 0x82
+#define PKTYPE_CMD_ZERO_GYRO     0x83
 
-#define HEADER_BYTE0 0x68
-#define HEADER_BYTE1 0x65
-#define HEADER_BYTE2 0x61
-#define HEADER_BYTE3 0x64
+#define HEADER_BYTE0 0x68 // 'h'
+#define HEADER_BYTE1 0x65 // 'e'
+#define HEADER_BYTE2 0x61 // 'a'
+#define HEADER_BYTE3 0x64 // 'd'
 
 typedef struct _packet_t packet_t;
 struct _packet_t

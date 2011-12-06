@@ -35,49 +35,21 @@ USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface =
  *  used like any regular character stream in the C APIs
  */
 static FILE USBSerialStream;
-
-
-#define stransmitf(args...)  {                   \
-		  char tstring[50];					\
-		  sprintf(tstring,args);			\
-		  transmitstring(tstring,strlen(tstring));	\
-                    } 
+uint8_t seq;
+uint8_t* txBuffer;
+uint16_t badPkts;
+packet_t rxPkt;
+status_t rxStat;
 
 void sendByte(char c){
 	CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (uint8_t)c);
 }
 
-
-void transmitstring(char *tx, int len){
-	int i;
-	for(i=0;i<len;i++)
-		sendByte(tx[i]);
+void handleUSB(void)
+{
+    CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
+    USB_USBTask();
 }
-
-void parseCommand(uint8_t c){
-  if(c=='C'){
-      Toggle_CREATE_PWR_EN;
-  }
-    if(c=='K'){
-      Toggle_KIN_EN;
-  }
-  if(c=='M'){
-      shortsong1();
-  }
-  if(c=='f'){
-      failSong();
-  }
-  
-    if(c == 'Y')
-        HL_BaseSpeed(32767);
-    if(c == 'H')
-        HL_BaseSpeed(-32767);
-    if(c == 'P')
-        HL_SetBasePosition(128);
-}
-
-uint8_t seq;
-uint8_t* txBuffer;
 
 void transmitArmState(){
     uint8_t payload[6];
@@ -126,6 +98,7 @@ int main(void)
     uint16_t counter=0;
     seq = 0;
     txBuffer = (uint8_t*)malloc(sizeof(packet_t));
+    badPkts = 0;
 
 	/* Create a regular character stream for the interface so that it can be used with the stdio.h functions */
 	CDC_Device_CreateStream(&VirtualSerial_CDC_Interface, &USBSerialStream);
@@ -141,15 +114,42 @@ int main(void)
 
     for (;;)
     {
-		int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
-		if (!(ReceivedByte < 0)){
-            //CDC_Device_SendByte(&VirtualSerial_CDC_Interface, (uint8_t)ReceivedByte);
-            // parseCommand((uint8_t)ReceivedByte);
+        // returns negative on failure, byte value on success
+        int16_t rxByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
+
+		if (!(rxByte < 0)){
+
+            // oddly ReceiveByte returns a 16-bit int
+            uint8_t byte = (uint8_t)rxByte;
+
+            if (PKT_Decoded(byte, &rxPkt, &rxStat) != DECODE_STATUS_INCOMPLETE) {
+                switch (rxStat.state)
+                {
+                case DECODE_STATUS_COMPLETE:
+                    switch (rxPkt.type) 
+                    {
+                    case PKTYPE_CMD_SET_ARM_POS:
+                        break;
+                    case PKTYPE_CMD_SET_HAND_POS:
+                        break;
+                    case PKTYPE_CMD_SET_PWR_STATE:
+                        break;
+                    case PKTYPE_CMD_ZERO_GYRO:
+                        break;
+                    }
+                    break;
+                case DECODE_STATUS_INVALID:
+                    badPkts++; 
+                    rxStat.recvd = 0;
+                    break;
+                }
+            }
 		}
 
         HL_UpdateState();
 
-		if(counter > 10000){
+        // FIXME: this const counter check should be replace by timer delta function
+		if (counter > 10000){
             LEDs_ToggleLEDs(LEDS_LED2);
             counter = 0;
             transmitArmState();
@@ -161,18 +161,7 @@ int main(void)
 	}
 }
 
-void handleUSB(void)
-{
-    CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
-    USB_USBTask();
-}
-    
-
-/** ISR to periodically toggle the LEDs on the board to indicate that the bootloader is active. */
-ISR(TIMER1_OVF_vect, ISR_BLOCK)
-{
-// 	LEDs_ToggleLEDs(LEDS_LED1);
-}
+ISR(TIMER1_OVF_vect, ISR_BLOCK) {}
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
 void SetupHardware(void)
