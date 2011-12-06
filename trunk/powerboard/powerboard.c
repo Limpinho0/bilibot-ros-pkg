@@ -107,7 +107,7 @@ int main(void)
 
     sei();
 
-    CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
+    //CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
     CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
     USB_USBTask();
     LEDs_ToggleLEDs(LEDS_LED2);
@@ -129,6 +129,7 @@ int main(void)
                     switch (rxPkt.type) 
                     {
                     case PKTYPE_CMD_SET_ARM_POS:
+                        HL_SetBasePosition(rxPkt.payload[0]);
                         break;
                     case PKTYPE_CMD_SET_HAND_POS:
                         break;
@@ -140,23 +141,22 @@ int main(void)
                     break;
                 case DECODE_STATUS_INVALID:
                     badPkts++; 
-                    rxStat.recvd = 0;
                     break;
                 }
+                rxStat.recvd = 0;
             }
 		}
-
-        HL_UpdateState();
 
         // FIXME: this const counter check should be replace by timer delta function
 		if (counter > 10000){
             LEDs_ToggleLEDs(LEDS_LED2);
-            counter = 0;
             transmitArmState();
             transmitGyroState();
+            counter = 0;
 		}
 
         handleUSB();
+        HL_UpdateState();
 		counter++;
 	}
 }
