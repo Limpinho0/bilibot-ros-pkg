@@ -92,3 +92,7 @@ target_link_libraries(powerboard.elf lufacore wireformat Descriptors)
 # LUFA/Drivers/USB/Class/Host/Printer.o 
 # LUFA/Drivers/USB/Class/Host/RNDIS.o 
 # LUFA/Drivers/USB/Class/Host/StillImage.o
+
+
+add_custom_command(TARGET powerboard.elf POST_BUILD
+				   COMMAND avr-objcopy -O ihex -R .eeprom powerboard.elf powerboard.hex)
