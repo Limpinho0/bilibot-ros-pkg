@@ -10,7 +10,8 @@ int MOTOR_DIR_MSK;
 #define MOTOR_DIR_UP 0x1
 #define MOTOR_DIR_DN 0x2
 
-#define MOTOR_DEFAULT_SPD 32767
+#define MOTOR_UP_SPD 32767
+#define MOTOR_DN_SPD -32767
 #define MOTOR_POS_ERR 5
 
 void setupMotors(){
@@ -18,6 +19,7 @@ void setupMotors(){
     startProfile();
 
     _targetPosition = 0;
+    _targetSpeed = 0;
 
     MOTOR_DIR_MSK = MOTOR_DIR_UP | MOTOR_DIR_DN;
     
@@ -57,22 +59,25 @@ void HL_BaseSpeed(int16_t spd){
     }
 }
 
-void HL_SetBasePosition(int8_t position)
+void HL_SetBasePosition(uint8_t position)
 {
     if (abs(ADC_BASE_POT-position) <= MOTOR_POS_ERR)  
         HL_BaseSpeed(0);
 
-    if (ADC_BASE_POT > position)
-        HL_BaseSpeed(MOTOR_DEFAULT_SPD);
     if (ADC_BASE_POT < position)
-        HL_BaseSpeed(-MOTOR_DEFAULT_SPD);
+        HL_BaseSpeed(MOTOR_UP_SPD);
+    if (ADC_BASE_POT > position)
+        HL_BaseSpeed(MOTOR_DN_SPD);
 
     _targetPosition = position;
 }
 
 uint16_t HL_GetTargetSpeed()
 {
-    return _targetSpeed;
+    if (_targetSpeed == MOTOR_UP_SPD)
+        return 1;
+    else
+        return 2;
 }
 
 uint8_t HL_GetTargetPos()

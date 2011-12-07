@@ -79,7 +79,7 @@ void transmitGyroState(){
     payload[0] = ADC_GYRO;
 
     CDC_Device_Flush(&VirtualSerial_CDC_Interface);
-    packet_t* pkt = PKT_Create(PKTYPE_STATUS_ARM_STATE, seq++, payload, 1);
+    packet_t* pkt = PKT_Create(PKTYPE_STATUS_GYRO_RAW, seq++, payload, 1);
     uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
     for(int i=0; i < len; i++) {
         sendByte(txBuffer[i]);
@@ -122,6 +122,7 @@ int main(void)
             // oddly ReceiveByte returns a 16-bit int
             uint8_t byte = (uint8_t)rxByte;
 
+            // incrementally builds packets byte-by-byte 
             if (PKT_Decoded(byte, &rxPkt, &rxStat) != DECODE_STATUS_INCOMPLETE) {
                 switch (rxStat.state)
                 {
