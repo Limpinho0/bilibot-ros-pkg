@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 
     ros::Publisher pub = n.advertise<std_msgs::UInt8>("/status", 1);
 
-    uint8_t position = 128;
+    uint8_t position = 0;
     txPkt = PKT_Create(PKTYPE_CMD_SET_ARM_POS, 0, &position, 1);
     sendPacket(serial, txPkt);
 
@@ -45,8 +45,21 @@ int main(int argc, char **argv)
             switch(status.state)
             {
             case DECODE_STATUS_COMPLETE: 
-                msg.data = rxPkt.payload[0];
-                pub.publish(msg);
+                switch (rxPkt.type)
+                {
+                case PKTYPE_STATUS_HEARTBEAT:
+                    break;
+                case PKTYPE_STATUS_ARM_STATE:
+                    msg.data = rxPkt.payload[2];
+                    pub.publish(msg);
+                    msg.data = rxPkt.payload[0];
+                    pub.publish(msg);
+                    break;
+                case PKTYPE_STATUS_GYRO_RAW: 
+                    break;
+                default:
+                    ROS_WARN("received unknown packet type from powerboard");
+                }
                 break;
             case DECODE_STATUS_INVALID:
                 ROS_WARN("dropped packets so far: %d", ++packet_drops);
