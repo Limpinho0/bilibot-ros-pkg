@@ -50,10 +50,10 @@ int main(int argc, char **argv)
                 case PKTYPE_STATUS_HEARTBEAT:
                     break;
                 case PKTYPE_STATUS_ARM_STATE:
-                    break;
-                case PKTYPE_STATUS_GYRO_RAW: 
                     msg.data = rxPkt.payload[0];
                     pub.publish(msg);
+                    break;
+                case PKTYPE_STATUS_GYRO_RAW: 
                     break;
                 default:
                     ROS_WARN("received unknown packet type from powerboard");
