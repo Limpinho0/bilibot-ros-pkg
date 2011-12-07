@@ -3,7 +3,7 @@
 #include "lowlevelmotor.h"
 #include "adc.h"
 
-int16_t _targetSpeed;
+int16_t _curSpeed;
 uint8_t _targetPosition;
 
 int MOTOR_DIR_MSK;
@@ -19,7 +19,7 @@ void setupMotors(){
     startProfile();
 
     _targetPosition = 0;
-    _targetSpeed = 0;
+    _curSpeed = 0;
 
     MOTOR_DIR_MSK = MOTOR_DIR_UP | MOTOR_DIR_DN;
     
@@ -31,7 +31,7 @@ void setupMotors(){
 
 ISR(INT7_vect)
 {
-    if (ULIMIT_VAL == 1) {
+    if (ULIMIT_VAL == 1 && (_curSpeed == MOTOR_UP_SPD || _curSpeed == 0)) {
         MOTOR_DIR_MSK &= ~MOTOR_DIR_UP;
         HL_BaseSpeed(0);
     }
@@ -41,7 +41,7 @@ ISR(INT7_vect)
 
 ISR(INT6_vect)
 {
-    if (LLIMIT_VAL == 1) {
+    if (LLIMIT_VAL == 1 && (_curSpeed == MOTOR_DN_SPD || _curSpeed == 0)) {
         MOTOR_DIR_MSK &= ~MOTOR_DIR_DN;
         HL_BaseSpeed(0); 
     }
@@ -54,7 +54,7 @@ void HL_BaseSpeed(int16_t spd){
         (spd < 0 && ((MOTOR_DIR_MSK & MOTOR_DIR_DN) == MOTOR_DIR_DN)) ||
          spd == 0)
     {
-        _targetSpeed=spd;
+        _curSpeed=spd;
         setBaseSpeed(spd);
     }
 }
@@ -72,12 +72,9 @@ void HL_SetBasePosition(uint8_t position)
     _targetPosition = position;
 }
 
-uint16_t HL_GetTargetSpeed()
+uint16_t HL_GetBaseSpeed()
 {
-    if (_targetSpeed == MOTOR_UP_SPD)
-        return 1;
-    else
-        return 2;
+    return _curSpeed;
 }
 
 uint8_t HL_GetTargetPos()

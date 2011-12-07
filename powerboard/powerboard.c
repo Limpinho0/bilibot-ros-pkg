@@ -57,7 +57,7 @@ void transmitArmState(){
     // fill in payload
     payload[0] = ADC_BASE_POT;
     payload[1] = HL_GetTargetPos();
-    payload[2] = HL_GetTargetSpeed();
+    payload[2] = HL_GetBaseSpeed();
     payload[3] = HL_GetLimitState();
     payload[4] = ADC_BASE_CURR;
     payload[5] = ADC_HAND_CURR;
