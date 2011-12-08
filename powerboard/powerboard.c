@@ -88,6 +88,68 @@ void transmitGyroState(){
     free(pkt);
 }
 
+
+void setupGeneralState(){
+  SETUP_DEMO_BTN; h_DEMO_BTN;
+  SETUP_ESTOP_BTN;  h_ESTOP_BTN;
+  SETUP_CREATE_ON;  h_CREATE_ON;
+  SETUP_CREATE_CHRG_IND; h_CREATE_CHRG_IND;
+  SETUP_PWR_IND; h_PWR_IND;
+  SETUP_OVR_CHRG; h_OVR_CHRG;
+}
+
+
+uint8_t getGeneralState(){
+      uint8_t bstate=0x00;
+    //some battery data
+    if((READ_PWR_IND) == 0)
+      bstate|=0x01;
+    if((READ_OVR_CHRG) == 0)
+      bstate |=0x02;
+    //kinect enabled?
+    if(READ_KIN_EN)
+      bstate |= 0x04;
+    
+    //create stuff:
+    if(READ_CREATE_PWR_EN)  //create charging enabled?
+      bstate |= 0x08;
+    if(READ_CREATE_ON)  //create on
+      bstate |= 0x10;
+    if(READ_CREATE_CHRG_IND)  //create charging?
+      bstate |= 0x20;
+    
+    //io buttons:
+    if((READ_DEMO_BTN) == 0)  //Demo button pressed?
+      bstate |= 0x40;
+    if((READ_ESTOP_BTN) == 0)  //estop button pressed?
+      bstate |= 0x80;
+    
+    return bstate;
+  
+}
+
+void transmitBattState(){
+    uint8_t payload[4];
+
+    // fill in payload
+    payload[0] = ADC_BATT;
+    payload[1] = ADC_AD0;
+    payload[2] = ADC_AD1;
+    payload[3] = getGeneralState();
+    
+      
+
+    CDC_Device_Flush(&VirtualSerial_CDC_Interface);
+    packet_t* pkt = PKT_Create(PKTYPE_STATUS_BATT_RAW, seq++, payload, 4);
+    uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
+    for(int i=0; i < len; i++) {
+        sendByte(txBuffer[i]);
+        handleUSB();
+    }
+    free(pkt);
+}
+
+
 /** Main program entry point. This routine contains the overall program flow, including initial
  *  setup of all components and the main program loop.
  */
@@ -153,6 +215,7 @@ int main(void)
             LEDs_ToggleLEDs(LEDS_LED2);
             transmitArmState();
             transmitGyroState();
+	    transmitBattState();
             counter = 0;
 		}
 
@@ -174,7 +237,8 @@ void SetupHardware(void)
     SETUP_LLIMIT;
     EN_ULIMIT_ISR;
     EN_LLIMIT_ISR;
-
+    
+    setupGeneralState();
     setupMotors();
     setupADC();
 

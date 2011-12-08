@@ -48,12 +48,25 @@
 #define  l_GIO_1 PORTB &= 0x7F	
 #define READ_GIO_1  PORTB & 0x80	
 #define Toggle_GIO_1  PORTB ^= 0x80
+
+
+
 //Atmel pin 18, labeled PE4, is connected to the on button.  The suffix for this pin is: ON_BTN.  It has the following defines: 	
-#define SETUP_ON_BTN  DDRE |= 0x10	
-#define  h_ON_BTN PORTE |= 0x10	
-#define  l_ON_BTN PORTE &= 0xEF	
-#define READ_ON_BTN  PORTE & 0x10	
-#define Toggle_ON_BTN  PORTE ^= 0x10
+#define SETUP_ESTOP_BTN  DDRE &= 0xEF	
+#define  h_ESTOP_BTN PORTE |= 0x10	
+#define  l_ESTOP_BTN PORTE &= 0xEF	
+#define READ_ESTOP_BTN  PINE & 0x10	
+#define Toggle_ESTOP_BTN  PORTE ^= 0x10
+
+
+//Atmel pin 18, labeled PB4, is connected to the on button.  The suffix for this pin is: ON_BTN.  It has the following defines: 	
+#define SETUP_DEMO_BTN  DDRB &= 0xEF	
+#define  h_DEMO_BTN PORTB |= 0x10	
+#define  l_DEMO_BTN PORTB &= 0xEF	
+#define READ_DEMO_BTN  PINB & 0x10	
+#define Toggle_DEMO_BTN  PORTB ^= 0x10
+
+
 //Atmel pin 19, labeled PE5, is connected to the General IO 2.  The suffix for this pin is: GIO_2.  It has the following defines: 	
 #define SETUP_GIO_2  DDRE |= 0x20	
 #define  h_GIO_2 PORTE |= 0x20	
