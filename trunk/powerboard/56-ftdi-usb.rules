@@ -1,0 +1,2 @@
+# make ftdi device mount with writing permissions (default is read only for unknown devices)
+ATTRS{idProduct}=="6001",ATTRS{idVendor}=="0403",MODE="666",GROUP="admin"

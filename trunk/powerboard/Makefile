@@ -442,11 +442,22 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 # Default target.
-all: begin gccversion sizebefore build sizeafter end
+all: progutils begin gccversion sizebefore build sizeafter end
 
 # Change the build target to build a HEX file or a library.
 build: elf hex eep lss sym
 #build: lib
+
+progutils: usbreset usbreset2 togglects
+
+#these guys require libftdi-dev libusb-dev
+
+usbreset: usbreset.c
+	gcc -o bin/usbreset usbreset.c -lusb
+usbreset2: usbreset2.c
+	gcc -o bin/usbreset2 usbreset2.c -lusb
+togglects: togglects.c
+	gcc -o bin/togglects togglects.c -lftdi
 
 
 elf: $(TARGET).elf
