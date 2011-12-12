@@ -231,6 +231,7 @@ ISR(TIMER1_OVF_vect, ISR_BLOCK) {}
 void SetupHardware(void)
 {
     SETUP_CREATE_PWR_EN;
+    h_CREATE_PWR_EN;
     SETUP_KIN_EN;
     h_KIN_EN;
     SETUP_ULIMIT;
