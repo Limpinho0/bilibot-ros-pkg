@@ -12,6 +12,3 @@ passwad="uploadmyfile"
 datawad = base64.encodestring(file("/tmp/toup", "rb").read())
 postwad = urllib.urlencode({"pass":passwad,"bot":botwad,"filedata":datawad, "filename":input_filename})
 file("/tmp/up.log", "wb").write(postwad)
-
-ls
-ls

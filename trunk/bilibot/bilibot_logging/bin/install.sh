@@ -10,7 +10,7 @@ pkgpath=$(pwd)/bin/logging
 mkdir -p $pkgpath
 cd $origdir
 echo $(pwd)
-
+lpath=$(pwd)
 echo "Installing logging scripts"
 
 
@@ -19,6 +19,9 @@ sed "s%##PATHHERE##%$pkgpath%g" < uploadall > $pkgpath/uploadall
 sed "s%##PATHHERE##%$pkgpath%g" < uploadlog > $pkgpath/uploadlog
 sed "s%##PATHHERE##%$pkgpath%g" < uploadlogs > $pkgpath/uploadlogs
 sed "s%##PATHHERE##%$pkgpath%g" < postencode.py > $pkgpath/postencode.py
+sed "s%##PATHHERE##%$pkgpath%g" < runuploads.sh > $pkgpath/runuploads.sh
+sed -i "s%##LPATH##%$lpath%g" $pkgpath/runuploads.sh
+
 chmod +x $pkgpath/*
 
 
