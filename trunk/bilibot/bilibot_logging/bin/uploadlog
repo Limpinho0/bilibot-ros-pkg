@@ -1,6 +1,6 @@
-
-bindir=/home/bilibot/bin
-bindir=/home/garratt/Downloads/bin
+bindir=$(rospack find bilibot_logging)/bin
+#bindir=/home/bilibot/bin
+#bindir=/home/garratt/Downloads/bin
 /usr/bin/python $bindir/postencode.py $1
 wget -O /tmp/up1.log --post-file=/tmp/up.log http://www.serrzick.com/uploada.php
 
