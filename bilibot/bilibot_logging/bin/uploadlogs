@@ -1,10 +1,8 @@
 ##get latest log, compress and split if necessary
 datestamp=$1
 rosdir=~/.ros/log/
-#rosdir=/home/garratt/temp/log/
-#bindir=/home/bilibot/bin
-#bindir=/home/garratt/Downloads/bin
-bindir=$(rospack find bilibot_logging)/bin
+bindir=##PATHHERE##
+
 
 roslog=$(ls -1tr $rosdir | grep -v log | tail -2 | head -1)
 echo roslog: $roslog
