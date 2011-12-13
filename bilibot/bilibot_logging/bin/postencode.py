@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+import roslib; roslib.load_manifest('bilibot_logging')
+pkgpath=roslib.packages.get_pkg_dir('bilibot_logging')
 import sys, urllib, base64
 input_filename = sys.argv[1]
-fin=open("identifier")
+fin=open(pkgpath+"/identifier")
 botwad="test"
 botwad=fin.readline()[:-1]
 fin.close()
