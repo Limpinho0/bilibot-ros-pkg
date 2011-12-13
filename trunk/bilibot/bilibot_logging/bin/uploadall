@@ -1,5 +1,7 @@
 datestamp=$(date +%s)
-bindir=$(rospack find bilibot_logging)/bin
+
+bindir=##PATHHERE##
+
 
 history > /tmp/toup
 $bindir/uploadlog history_$datestamp
