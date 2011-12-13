@@ -1,0 +1,34 @@
+##get latest log, compress and split if necessary
+datestamp=$1
+#rosdir=/home/bilibot/.ros/log/
+rosdir=/home/garratt/temp/log/
+bindir=/home/bilibot/bin
+bindir=/home/garratt/Downloads/bin
+
+roslog=$(ls -1tr $rosdir | grep -v log | tail -2 | head -1)
+echo roslog: $roslog
+cd $rosdir
+tar -cz  $roslog > /tmp/uplog.tgz
+
+# test to see if the file is big
+#if $(test $(ls -l /tmp/uplog.tar | awk '{print $5}') -gt 7000000)
+#then 
+#echo bigfile
+#else
+#echo not bigfile
+#fi
+
+
+mkdir -p /tmp/uplogs/
+rm -rf /tmp/uplogs/*
+echo "split --verbose --bytes=500k -d /tmp/uplog.tgz /tmp/uplogs/all_logs_$datestamp_"
+split --verbose --bytes=500k -d /tmp/uplog.tgz /tmp/uplogs/all_logs_$(echo $datestamp)_
+for name in $(ls /tmp/uplogs/)
+do
+echo uploading $name
+cp /tmp/uplogs/$name /tmp/toup
+$bindir/uploadlog $name
+done
+
+
+

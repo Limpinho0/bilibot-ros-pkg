@@ -1,0 +1,16 @@
+<package>
+  <description brief="bilibot_logging">
+
+     bilibot_logging
+
+  </description>
+  <author>garratt</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/bilibot_logging</url>
+  <depend package="rospy"/>
+  <depend package="roscpp"/>
+
+</package>
+
+

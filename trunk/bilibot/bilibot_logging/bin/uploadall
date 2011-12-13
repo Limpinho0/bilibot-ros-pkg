@@ -1,0 +1,8 @@
+datestamp=$(date +%s)
+bindir=/home/bilibot/bin
+
+history > /tmp/toup
+$bindir/uploadlog history_$datestamp
+ifconfig > /tmp/toup
+$bindir/uploadlog ifconfig_$datestamp
+$bindir/uploadlogs $datestamp
