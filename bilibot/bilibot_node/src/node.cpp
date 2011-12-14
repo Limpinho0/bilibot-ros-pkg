@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <iostream>
+#include <ros/console.h>
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "std_msgs/UInt8.h"
@@ -83,9 +84,13 @@ int main(int argc, char **argv)
     status.recvd = 0;
     std_msgs::UInt8 msg;
     bilibot_node::PowerboardSensorState pbstate;
+    if (serial->openPort() < 0) {
+        
+    }
+
 
     if (serial->openPort() < 0) {
-        printf("unable to open port\n");
+        ROS_ERROR("unable to open port\n");
         return -1;
     }
 
@@ -144,6 +149,7 @@ int main(int argc, char **argv)
     }
 
     serial->closePort();
+    
     return 0;
 }
 
