@@ -29,8 +29,8 @@ sed "s/wlan0/$interface/g" < bilibot.conf > /etc/init/bilibot.conf
 cat 56-ftdi-usb.rules > /etc/udev/rules.d/56-ftdi-usb.rules
 
 # Copy files into /etc/ros/electric/bilibot
-mkdir /etc/ros
-mkdir /etc/ros/electric
+mkdir -p /etc/ros
+mkdir -p /etc/ros/electric
 cat bilibot.launch > /etc/ros/electric/bilibot.launch
 cp ../bin/resetACM /usr/bin/resetACM
 
