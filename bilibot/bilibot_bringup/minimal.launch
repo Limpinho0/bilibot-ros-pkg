@@ -20,7 +20,7 @@
     <remap from="imu_data" to="imu/data"/>
   </node>
 
-  <node pkg="bilibot_node" type="bilibot_node" name="bilibot_node" output="screen">
+  <node pkg="bilibot_node" type="bilibot_node" name="bilibot_node" output="screen" respawn="true">
     <param name="bonus" value="false" />
   </node>
 
