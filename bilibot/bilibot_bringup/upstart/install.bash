@@ -25,12 +25,14 @@ sed "s/wlan0/$interface/g" < bilibot-stop > /usr/sbin/bilibot-stop
 chmod +x /usr/sbin/bilibot-stop
 sed "s/wlan0/$interface/g" < bilibot.conf > /etc/init/bilibot.conf
 
+#install rules for mounting usb devices
 cat 56-ftdi-usb.rules > /etc/udev/rules.d/56-ftdi-usb.rules
 
 # Copy files into /etc/ros/electric/bilibot
 mkdir /etc/ros
 mkdir /etc/ros/electric
 cat bilibot.launch > /etc/ros/electric/bilibot.launch
+cp ../bin/resetACM /usr/bin/resetACM
 
 echo '. /opt/ros/electric/setup.bash; export ROS_PACKAGE_PATH=/home/bilibot/ros:${ROS_PACKAGE_PATH}' > /etc/ros/setup.bash
 
