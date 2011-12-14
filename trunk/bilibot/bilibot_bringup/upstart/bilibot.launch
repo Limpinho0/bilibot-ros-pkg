@@ -1,0 +1,12 @@
+<launch>
+
+  <!-- sample file, copy this to /etc/ros/electric/bilibot.launch -->
+
+  <param name="bilibot_node/gyro_scale_correction" value="1.0"/>
+  <param name="bilibot_node/odom_angular_scale_correction" value="1.0"/>
+
+  <include file="$(find bilibot_bringup)/minimal.launch">
+ <!--   <arg name="urdf_file" value="$(find xacro)/xacro.py '$(find bilibot_description)/urdf/bilibot.urdf.xacro'" /> -->
+  </include>
+
+</launch>
