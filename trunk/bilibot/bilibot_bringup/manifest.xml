@@ -9,7 +9,8 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/bilibot_bringup</url>
 
-  <depend package="turtlebot_node"/>
+  <depend package="create_node"/>
+  <depend package="bilibot_node"/>
   <depend package="openni_camera"/>
   <depend package="pointcloud_to_laserscan"/>
   <depend package="tf"/>
