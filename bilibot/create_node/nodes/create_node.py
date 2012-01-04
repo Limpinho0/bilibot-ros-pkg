@@ -36,10 +36,10 @@
 import roslib; roslib.load_manifest('create_node')
 
 """
-ROS Create node for ROS built on top of create_driver.
+ROS Turtlebot node for ROS built on top of turtlebot_driver.
 This driver is based on otl_roomba by OTL (otl-ros-pkg).
 
-create_driver is based on KWC & Damon Kohler's pyrobot.py/turtlebot driver.
+turtlebot_driver is based on Damon Kohler's pyrobot.py.
 """
 
 import os
@@ -64,7 +64,7 @@ from create_node.msg import TurtlebotSensorState, Drive, Turtle
 from create_node.srv import SetTurtlebotMode,SetTurtlebotModeResponse, SetDigitalOutputs, SetDigitalOutputsResponse
 from create_node.diagnostics import TurtlebotDiagnostics
 from create_node.gyro import TurtlebotGyro
-from turtlebot_node.sense import TurtlebotSensorHandler, \
+from create_node.sense import TurtlebotSensorHandler, \
      ODOM_POSE_COVARIANCE, ODOM_POSE_COVARIANCE2, ODOM_TWIST_COVARIANCE, ODOM_TWIST_COVARIANCE2
 from create_node.songs import bonus
 
@@ -73,7 +73,7 @@ import dynamic_reconfigure.server
 from create_node.cfg import TurtleBotConfig
 
 
-class CreateNode(object):
+class TurtlebotNode(object):
 
     def __init__(self, default_port='/dev/ttyUSB0', default_update_rate=30.0):
         """
@@ -84,7 +84,7 @@ class CreateNode(object):
         self.default_port = default_port
         self.default_update_rate = default_update_rate
 
-        self.robot = Turtlebot()
+        self.robot = Create()#Turtlebot()
         self.create_sensor_handler = None
         self.sensor_state = TurtlebotSensorState()
         self.req_cmd_vel = None
@@ -107,11 +107,13 @@ class CreateNode(object):
                 self.robot.start(self.port)
                 break
             except serial.serialutil.SerialException as ex:
+                msg = "Failed to open port %s.  Please make sure the Create cable is plugged into the computer. \n"%(self.port)
+                self._diagnostics.node_status(msg,"error")
                 if log_once:
                     log_once = False
-                    rospy.logerr("Failed to open port %s.  Please make sure the Create cable is plugged into the computer. "%(self.port))
+                    rospy.logerr(msg)
                 else:
-                    sys.stderr.write("Failed to open port %s.  Please make sure the Create cable is plugged into the computer.\n"%(self.port))
+                    sys.stderr.write(msg)
                 time.sleep(3.0)
 
         self.create_sensor_handler = TurtlebotSensorHandler(self.robot)
@@ -131,7 +133,7 @@ class CreateNode(object):
         self.port = rospy.get_param('~port', self.default_port)
         self.update_rate = rospy.get_param('~update_rate', self.default_update_rate)
         self.drive_mode = rospy.get_param('~drive_mode', 'twist')
-        self.has_gyro = rospy.get_param('~has_gyro', True)
+        self.has_gyro = rospy.get_param('~has_gyro', False)
         self.odom_angular_scale_correction = rospy.get_param('~odom_angular_scale_correction', 1.0)
         self.odom_linear_scale_correction = rospy.get_param('~odom_linear_scale_correction', 1.0)
         self.cmd_vel_timeout = rospy.Duration(rospy.get_param('~cmd_vel_timeout', 0.6))
@@ -189,7 +191,7 @@ class CreateNode(object):
             if ts > 0:
                 ts = min(ts,   MAX_WHEEL_SPEED - abs(tw))
             else:
-                ts = max(ts, -(MAX_WHEEL_SPEED - abs(tw))
+                ts = max(ts, -(MAX_WHEEL_SPEED - abs(tw)))
             self.req_cmd_vel = int(ts - tw), int(ts + tw)
         elif self.drive_mode == 'turtle':
             # convert to direct_drive args
@@ -225,7 +227,9 @@ class CreateNode(object):
         """
         Perform a soft-reset of the Create
         """
-        rospy.logdebug("Soft-rebooting turtlebot to passive mode.")
+        msg ="Soft-rebooting turtlebot to passive mode."
+        rospy.logdebug(msg)
+        self._diagnostics.node_status(msg,"warn")
         self._set_digital_outputs([0, 0, 0])
         self.robot.soft_reset()
         time.sleep(2.0)
@@ -303,6 +307,16 @@ class CreateNode(object):
                    s.oi_mode == 1 and \
                    s.charging_state in [0, 5] and \
                    s.charge < 0.93*s.capacity:
+                rospy.loginfo("going into soft-reboot and exiting driver")
+                self._robot_reboot()
+                rospy.loginfo("exiting driver")
+                break
+
+            # Reboot Create if we detect that battery is at critical level switch to passive mode.
+            if s.charging_sources_available > 0 and \
+                   s.oi_mode == 3 and \
+                   s.charging_state in [0, 5] and \
+                   s.charge < 0.15*s.capacity:
                 rospy.loginfo("going into soft-reboot and exiting driver")
                 self._robot_reboot()
                 rospy.loginfo("exiting driver")
@@ -418,7 +432,7 @@ class CreateNode(object):
 def connected_file():
     return os.path.join(roslib.rosenv.get_ros_home(), 'turtlebot-connected')
 
-def create_main(argv):
+def turtlebot_main(argv):
     if '--respawnable' in argv:
         # This sleep throttles respawning of the driver node.  It
         # appears that pyserial does not properly release the file
@@ -431,12 +445,14 @@ def create_main(argv):
         # to the Create bootloader, and also to keep relaunching at a
         # minimum, we have a 3-second sleep.
         time.sleep(3.0)
-    c = CreateNode()
+    c = TurtlebotNode()
     try:
         c.start()
         c.spin()
     except Exception as ex:
-        sys.stderr.write("Failed to contact device with error: [%s]. Please check that the Create is powered on and that the connector is plugged into the Create."%(ex))
+        msg = "Failed to contact device with error: [%s]. Please check that the Create is powered on and that the connector is plugged into the Create."%(ex)
+        c._diagnostics.node_status(msg,"error")
+        sys.stderr.write(msg)
     finally:
         # Driver no longer connected, delete flag from disk
         try:
@@ -445,4 +461,4 @@ def create_main(argv):
 
 
 if __name__ == '__main__':
-    create_main(sys.argv)
+    turtlebot_main(sys.argv)
