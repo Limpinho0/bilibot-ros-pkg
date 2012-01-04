@@ -1,5 +1,5 @@
 <launch>
-  <include file="$(find bilibot_bringup)/base.launch" />
+  <include file="$(find bilibot_bringup)/minimal.launch" />
 
   <!-- Kinect -->
   <node pkg="nodelet" type="nodelet" name="openni_manager" output="screen" respawn="true" args="manager"/>
