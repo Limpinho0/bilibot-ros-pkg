@@ -20,8 +20,10 @@
     <remap from="imu_data" to="imu/data"/>
   </node>
 
+  <node pkg="create_node" type="create_node.py" name="create_node" output="screen" respawn="true">
+  </node>
+
   <node pkg="bilibot_node" type="bilibot_node" name="bilibot_node" output="screen" respawn="true">
-    <param name="bonus" value="false" />
   </node>
 
 </launch>
