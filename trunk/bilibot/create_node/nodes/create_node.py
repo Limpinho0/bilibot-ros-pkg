@@ -89,7 +89,7 @@ class TurtlebotNode(object):
         self.sensor_state = TurtlebotSensorState()
         self.req_cmd_vel = None
 
-        rospy.init_node('turtlebot')
+        rospy.init_node('create')
         self._init_params()
 
         self._diagnostics = TurtlebotDiagnostics()
