@@ -4,13 +4,19 @@
      bilibot_node
 
   </description>
-  <author>Jeff</author>
+  <author>Jeff Rousseau</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/bilibot_node</url>
 
+  <!-- sys deps -->
+  <rosdep name="boost" />
+  <!-- ros deps -->
   <depend package="roscpp"/>
+  <depend package="tf"/>
   <depend package="std_srvs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="nav_msgs"/>
 </package>
 
 
