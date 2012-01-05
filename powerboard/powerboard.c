@@ -3,6 +3,7 @@
 #include "wireformat.h"
 #include "pinmapping.h"
 #include "adc.h"
+#include "lowlevelmotor.h"
 #include "simplehighmotor.h"
 #include "music.h"
 #include <stdlib.h>
@@ -174,6 +175,8 @@ int main(void)
     USB_USBTask();
     LEDs_ToggleLEDs(LEDS_LED2);
 
+    uint8_t handOpen = 1;
+
     for (;;)
     {
         // returns negative on failure, byte value on success
@@ -200,6 +203,28 @@ int main(void)
                         break;
                     case PKTYPE_CMD_ZERO_GYRO:
                         break;
+                    case PKTYPE_CMD_TOGGLE_KINECT:
+                        Toggle_KIN_EN;
+                        break;
+                    case PKTYPE_CMD_TOGGLE_CREATE:
+                        Toggle_CREATE_ON;
+                        if(READ_CREATE_ON) {  // is the create powered?
+                            l_CREATE_CHRG_IND; // disable charging
+                            l_CREATE_PWR_EN;
+                        } else {
+                            h_CREATE_PWR_EN;
+                            h_CREATE_CHRG_IND;
+                        }
+                        break;
+                    case PKTYPE_CMD_TOGGLE_HAND_STATE:
+                        if (!handOpen) {
+                            HL_OpenHand();
+                            handOpen = 1;
+                        } else {
+                            HL_CloseHand();
+                            handOpen = 0;
+                        }
+                        break;
                     }
                     break;
                 case DECODE_STATUS_INVALID:
@@ -215,7 +240,7 @@ int main(void)
             LEDs_ToggleLEDs(LEDS_LED2);
             transmitArmState();
             transmitGyroState();
-	    transmitBattState();
+            transmitBattState();
             counter = 0;
 		}
 
@@ -238,8 +263,9 @@ void SetupHardware(void)
     SETUP_LLIMIT;
     EN_ULIMIT_ISR;
     EN_LLIMIT_ISR;
-    
+
     setupGeneralState();
+
     setupMotors();
     setupADC();
 

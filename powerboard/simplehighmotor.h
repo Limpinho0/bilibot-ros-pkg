@@ -6,6 +6,9 @@
 int16_t _curSpeed;
 uint8_t _targetPosition;
 
+uint8_t _handTask;
+uint32_t _count;
+
 int MOTOR_DIR_MSK;
 #define MOTOR_DIR_UP 0x1
 #define MOTOR_DIR_DN 0x2
@@ -18,6 +21,7 @@ void setupMotors(){
     LowLevelSetup();
     startProfile();
 
+    _handTask = 0;
     _targetPosition = 0;
     _curSpeed = 0;
 
@@ -92,10 +96,33 @@ uint8_t HL_GetLimitState()
     return state;
 }
 
+void HL_OpenHand()
+{
+    _handTask = 1;
+    _count = 0;
+    setHandOpen();
+}
+
+void HL_CloseHand()
+{
+    _handTask = 1;
+    _count = 0;
+    setHandClose();
+}
+
 void HL_UpdateState()
 {
     if (abs(ADC_BASE_POT-_targetPosition) <= MOTOR_POS_ERR)  
         HL_BaseSpeed(0);
+
+    if (_handTask)
+        _count++;
+
+    if (_count > 320000) {
+        _count = 0;
+        _handTask = 0;
+        setHandBrake();
+    }
 }
 
 #endif
