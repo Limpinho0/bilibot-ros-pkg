@@ -1,13 +1,19 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <iostream>
+#include <math.h>
 #include <ros/console.h>
+#include <boost/circular_buffer.hpp>
+#include <boost/foreach.hpp>
 #include "ros/ros.h"
+#include "tf/transform_broadcaster.h"
 #include "std_msgs/String.h"
 #include "std_msgs/UInt8.h"
 #include "bilibot_node/PowerboardSensorState.h"
 #include "bilibot_node/SetArmPosition.h"
 #include "std_srvs/Empty.h"
+#include "sensor_msgs/Imu.h"
+#include "nav_msgs/Odometry.h"
 #include "serial.h"
 
 extern "C" {
@@ -75,6 +81,64 @@ void updateBattState(bilibot_node::PowerboardSensorState &pbstate, packet_t rxPk
   pbstate.estop_button = rxPkt.payload[3] & 0x80;
 }
 
+// gyro globals
+double cal_offset = 140;
+double rate = 0;
+double orientation = 0;
+
+bool isMoving = false;
+void odomCallback(const nav_msgs::Odometry& odomMsg)
+{
+    if (fabs(odomMsg.twist.twist.angular.x - 0.0) > 0.0001 ||
+        fabs(odomMsg.twist.twist.angular.y - 0.0) > 0.0001 ||
+        fabs(odomMsg.twist.twist.angular.z - 0.0) > 0.0001 || 
+        fabs(odomMsg.twist.twist.linear.x - 0.0) > 0.0001 || 
+        fabs(odomMsg.twist.twist.linear.y - 0.0) > 0.0001 || 
+        fabs(odomMsg.twist.twist.linear.z - 0.0) > 0.0001 ||) 
+    {
+        isMoving = true;
+    }
+    else
+    {
+        isMoving = false;
+    }
+}
+
+void updateGyroState(sensor_msgs::Imu& imuMsg, packet_t rxPkt, boost::circular_buffer<float>& calibration)
+{
+    uint8_t gyro_adc = rxPkt.payload[0];
+    double current_time = ros::Time::now().toSec();
+    double last_time = imuMsg.header.stamp.toSec();
+
+    if (!isMoving) {
+        calibration.push_back(float(gyro_adc));
+        double total = 0;
+        BOOST_FOREACH( float reading, calibration )
+        {
+            total += reading;
+            ROS_INFO("here");
+        }
+        cal_offset = total / calibration.size(); 
+        //ROS_INFO("cal_offset %f", cal_offset);
+    }
+
+    double dt = current_time - last_time;
+    double scale_correction = 1.0;
+    double maxValue = 255;
+    double vRef = 5;
+    double zeroRateV = cal_offset * vRef / maxValue;
+    double sensitivity = 0.013;
+
+    rate = (gyro_adc * vRef / maxValue - zeroRateV) / sensitivity;
+    rate = -1.0*rate;
+
+    orientation += rate * dt;
+    //ROS_INFO("orientation: %f", orientation);
+
+    imuMsg.header.stamp = ros::Time::now();
+    imuMsg.orientation = tf::createQuaternionMsgFromYaw(orientation * (M_PI/180.0));
+}
+
 int main(int argc, char **argv)
 {
     serial = new Serial("/dev/ttyACM0");
@@ -82,8 +146,9 @@ int main(int argc, char **argv)
     packet_t* txPkt;
     status_t status;
     status.recvd = 0;
-    std_msgs::UInt8 msg;
     bilibot_node::PowerboardSensorState pbstate;
+    sensor_msgs::Imu imu;
+    boost::circular_buffer<float> calibration(140);
 
     if (serial->openPort() < 0) {
         ROS_ERROR("unable to open port\n");
@@ -92,14 +157,22 @@ int main(int argc, char **argv)
 
     ros::init(argc, argv, "bilibot_node");
 
-    ros::NodeHandle n("~");
+    ros::NodeHandle n;
 
-    ros::ServiceServer arm_pos_service = n.advertiseService("set_arm_position", setArmPosition);
-    ros::ServiceServer create_pwr_service = n.advertiseService("toggle_create_power", toggleCreatePower);
+    // fill in imu data (start at 0 orientatino)
+    imu.orientation = tf::createQuaternionMsgFromYaw(0.0);
+    imu.header.stamp = ros::Time::now();
+    imu.header.frame_id = "gyro_link";
+    boost::array<double, 9> cov = {{1e6, 0, 0, 0, 1e6, 0, 0, 0, 1e-6}}; 
+    boost::array<double, 9> cov2 = {{-1, 0, 0, 0, 0, 0, 0, 0, 0}}; 
+    std::copy(cov.begin(), cov.end(), imu.orientation_covariance.begin());
+    std::copy(cov.begin(), cov.end(), imu.angular_velocity_covariance.begin());
+    std::copy(cov2.begin(), cov2.end(), imu.linear_acceleration_covariance.begin());
+
     ros::ServiceServer kinect_pwr_service = n.advertiseService("toggle_kinect_power", toggleKinectPower);
-
-    ros::Publisher pub = n.advertise<std_msgs::UInt8>("debug", 1);
-    ros::Publisher pub2 = n.advertise<bilibot_node::PowerboardSensorState>("powerboard", 1);
+    ros::Publisher sensor_state_pub = n.advertise<bilibot_node::PowerboardSensorState>("sensor_state", 1);
+    ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("imu/data", 1);
+    ros::Subscriber odom_sub = n.subscribe("odom", 1, odomCallback);
 
     uint8_t position = 255;
     txPkt = PKT_Create(PKTYPE_CMD_SET_ARM_POS, 0, &position, 1);
@@ -119,13 +192,13 @@ int main(int argc, char **argv)
                 case PKTYPE_STATUS_HEARTBEAT:
                     break;
                 case PKTYPE_STATUS_ARM_STATE:
-                    msg.data = rxPkt.payload[0];
-                    pub.publish(msg);
                     updateArmState(pbstate,rxPkt);
-                    pub2.publish(pbstate);
+                    sensor_state_pub.publish(pbstate);
                     break;
                 case PKTYPE_STATUS_GYRO_RAW: 
+                    updateGyroState(imu, rxPkt, calibration);
                     pbstate.gyro_raw = rxPkt.payload[0];
+                    imu_pub.publish(imu);
                     break;
 		    
                 case PKTYPE_STATUS_BATT_RAW:
@@ -181,7 +254,6 @@ bool setArmPosition(bilibot_node::SetArmPosition::Request  &req,
     free(txPkt);
     return true;
 }
-
 
 void sendPacket(Serial* serial, packet_t* pkt)
 {
