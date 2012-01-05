@@ -6,6 +6,8 @@
 #include "std_msgs/String.h"
 #include "std_msgs/UInt8.h"
 #include "bilibot_node/PowerboardSensorState.h"
+#include "bilibot_node/SetArmPosition.h"
+#include "std_srvs/Empty.h"
 #include "serial.h"
 
 extern "C" {
@@ -13,10 +15,16 @@ extern "C" {
 }
 
 void sendPacket(Serial* serial, packet_t* rxPkt);
+bool toggleCreatePower(std_srvs::Empty::Request  &req,
+            std_srvs::Empty::Response &res );
+bool toggleKinectPower(std_srvs::Empty::Request  &req,
+            std_srvs::Empty::Response &res );
+bool setArmPosition(bilibot_node::SetArmPosition::Request  &req,
+            bilibot_node::SetArmPosition::Response &res );
 
 static int packet_drops = 0;
+Serial* serial;
 
-    // fill in payload
 //     payload[0] = ADC_BASE_POT;
 //     payload[1] = HL_GetTargetPos();
 //     payload[2] = HL_GetBaseSpeed();
@@ -43,10 +51,6 @@ void updateArmState(bilibot_node::PowerboardSensorState &pbstate, packet_t rxPkt
   
 }
 
-
-
-
-
 //     payload[0] = ADC_BATT;
 //     payload[1] = ADC_AD0;
 //     payload[2] = ADC_AD1;
@@ -58,8 +62,6 @@ void updateArmState(bilibot_node::PowerboardSensorState &pbstate, packet_t rxPkt
 //     if(READ_CREATE_CHRG_IND) bstate |= 0x20;
 //     if((READ_DEMO_BTN) == 0) bstate |= 0x40;
 //     if((READ_ESTOP_BTN) ==0) bstate |= 0x80;
-    
-
 void updateBattState(bilibot_node::PowerboardSensorState &pbstate, packet_t rxPkt){
   pbstate.battery_voltage = rxPkt.payload[0];
   pbstate.charging_current = (int)rxPkt.payload[1] - (int)rxPkt.payload[2];
@@ -71,23 +73,17 @@ void updateBattState(bilibot_node::PowerboardSensorState &pbstate, packet_t rxPk
   pbstate.create_charging = rxPkt.payload[3] & 0x20;
   pbstate.demo_button = rxPkt.payload[3] & 0x40;
   pbstate.estop_button = rxPkt.payload[3] & 0x80;
-  
-  
 }
 
 int main(int argc, char **argv)
 {
-    Serial* serial = new Serial("/dev/ttyACM0");
+    serial = new Serial("/dev/ttyACM0");
     packet_t rxPkt;
     packet_t* txPkt;
     status_t status;
     status.recvd = 0;
     std_msgs::UInt8 msg;
     bilibot_node::PowerboardSensorState pbstate;
-    if (serial->openPort() < 0) {
-        
-    }
-
 
     if (serial->openPort() < 0) {
         ROS_ERROR("unable to open port\n");
@@ -96,14 +92,19 @@ int main(int argc, char **argv)
 
     ros::init(argc, argv, "bilibot_node");
 
-    ros::NodeHandle n;
+    ros::NodeHandle n("~");
 
-    ros::Publisher pub = n.advertise<std_msgs::UInt8>("/status", 1);
-    ros::Publisher pub2 = n.advertise<bilibot_node::PowerboardSensorState>("/powerboard", 1);
+    ros::ServiceServer arm_pos_service = n.advertiseService("set_arm_position", setArmPosition);
+    ros::ServiceServer create_pwr_service = n.advertiseService("toggle_create_power", toggleCreatePower);
+    ros::ServiceServer kinect_pwr_service = n.advertiseService("toggle_kinect_power", toggleKinectPower);
 
-    uint8_t position = 0;
+    ros::Publisher pub = n.advertise<std_msgs::UInt8>("debug", 1);
+    ros::Publisher pub2 = n.advertise<bilibot_node::PowerboardSensorState>("powerboard", 1);
+
+    uint8_t position = 255;
     txPkt = PKT_Create(PKTYPE_CMD_SET_ARM_POS, 0, &position, 1);
     sendPacket(serial, txPkt);
+    free(txPkt);
 
     while(ros::ok())
     {
@@ -113,7 +114,6 @@ int main(int argc, char **argv)
             switch(status.state)
             {
             case DECODE_STATUS_COMPLETE: 
-// 	    std::cout<<(int)rxPkt.type<<" ";
                 switch (rxPkt.type)
                 {
                 case PKTYPE_STATUS_HEARTBEAT:
@@ -121,25 +121,22 @@ int main(int argc, char **argv)
                 case PKTYPE_STATUS_ARM_STATE:
                     msg.data = rxPkt.payload[0];
                     pub.publish(msg);
-		    updateArmState(pbstate,rxPkt);
-		    pub2.publish(pbstate);
-// 		    for(int i=0;i<6;i++)
-// 		      std::cout<<(int)rxPkt.payload[i]<<" ";
+                    updateArmState(pbstate,rxPkt);
+                    pub2.publish(pbstate);
                     break;
                 case PKTYPE_STATUS_GYRO_RAW: 
-		  pbstate.gyro_raw = rxPkt.payload[0];
+                    pbstate.gyro_raw = rxPkt.payload[0];
                     break;
 		    
                 case PKTYPE_STATUS_BATT_RAW:
-		  updateBattState(pbstate,rxPkt);
-		  break;
+                    updateBattState(pbstate,rxPkt);
+                    break;
                 default:
                     ROS_WARN("received unknown packet type from powerboard");
                 }
-// 		    std::cout<<std::endl;
                 break;
             case DECODE_STATUS_INVALID:
-                ROS_WARN("dropped packets so far: %d", ++packet_drops);
+                //ROS_WARN("dropped packets so far: %d", ++packet_drops);
                 break;
             }
             status.recvd = 0;
@@ -152,6 +149,39 @@ int main(int argc, char **argv)
     
     return 0;
 }
+
+bool toggleCreatePower(std_srvs::Empty::Request  &req,
+            std_srvs::Empty::Response &res )
+{
+    ROS_INFO("toggling power to create");
+    uint8_t unused = 0;
+    packet_t* txPkt = PKT_Create(PKTYPE_CMD_TOGGLE_CREATE, 0, &unused, 1);
+    sendPacket(serial, txPkt);
+    free(txPkt);
+    return true;
+}
+
+bool toggleKinectPower(std_srvs::Empty::Request  &req,
+            std_srvs::Empty::Response &res )
+{
+    ROS_INFO("toggling power to kinect");
+    uint8_t unused = 0;
+    packet_t* txPkt = PKT_Create(PKTYPE_CMD_TOGGLE_KINECT, 0, &unused, 1);
+    sendPacket(serial, txPkt);
+    free(txPkt);
+    return true;
+}
+
+bool setArmPosition(bilibot_node::SetArmPosition::Request  &req,
+            bilibot_node::SetArmPosition::Response &res )
+{
+    ROS_INFO("setting arm postion to %d", req.position );
+    packet_t* txPkt = PKT_Create(PKTYPE_CMD_SET_ARM_POS, 0, &req.position, 1);
+    sendPacket(serial, txPkt);
+    free(txPkt);
+    return true;
+}
+
 
 void sendPacket(Serial* serial, packet_t* pkt)
 {
