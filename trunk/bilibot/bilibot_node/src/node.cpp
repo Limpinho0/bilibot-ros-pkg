@@ -89,18 +89,18 @@ double orientation = 0;
 bool isMoving = false;
 void odomCallback(const nav_msgs::Odometry& odomMsg)
 {
-    if (fabs(odomMsg.twist.twist.angular.x - 0.0) > 0.0001 ||
-        fabs(odomMsg.twist.twist.angular.y - 0.0) > 0.0001 ||
-        fabs(odomMsg.twist.twist.angular.z - 0.0) > 0.0001 || 
-        fabs(odomMsg.twist.twist.linear.x - 0.0) > 0.0001 || 
-        fabs(odomMsg.twist.twist.linear.y - 0.0) > 0.0001 || 
-        fabs(odomMsg.twist.twist.linear.z - 0.0) > 0.0001 ||) 
+    if (fabs(odomMsg.twist.twist.angular.x - 0.0) < 0.0001 && 
+        fabs(odomMsg.twist.twist.angular.y - 0.0) < 0.0001 && 
+        fabs(odomMsg.twist.twist.angular.z - 0.0) < 0.0001 && 
+        fabs(odomMsg.twist.twist.linear.x - 0.0) < 0.0001 && 
+        fabs(odomMsg.twist.twist.linear.y - 0.0) < 0.0001 && 
+        fabs(odomMsg.twist.twist.linear.z - 0.0) < 0.0001) 
     {
-        isMoving = true;
+        isMoving = false;
     }
     else
     {
-        isMoving = false;
+        isMoving = true;
     }
 }
 
@@ -116,10 +116,8 @@ void updateGyroState(sensor_msgs::Imu& imuMsg, packet_t rxPkt, boost::circular_b
         BOOST_FOREACH( float reading, calibration )
         {
             total += reading;
-            ROS_INFO("here");
         }
         cal_offset = total / calibration.size(); 
-        //ROS_INFO("cal_offset %f", cal_offset);
     }
 
     double dt = current_time - last_time;
@@ -130,10 +128,10 @@ void updateGyroState(sensor_msgs::Imu& imuMsg, packet_t rxPkt, boost::circular_b
     double sensitivity = 0.013;
 
     rate = (gyro_adc * vRef / maxValue - zeroRateV) / sensitivity;
-    rate = -1.0*rate;
 
     orientation += rate * dt;
-    //ROS_INFO("orientation: %f", orientation);
+    //ROS_INFO("orientation (deg): %f", (orientation));
+    //ROS_INFO("orientation (rad): %f", (orientation * (M_PI/180.0)));
 
     imuMsg.header.stamp = ros::Time::now();
     imuMsg.orientation = tf::createQuaternionMsgFromYaw(orientation * (M_PI/180.0));
