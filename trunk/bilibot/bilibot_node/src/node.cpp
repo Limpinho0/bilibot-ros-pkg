@@ -25,6 +25,8 @@ bool toggleCreatePower(std_srvs::Empty::Request  &req,
             std_srvs::Empty::Response &res );
 bool toggleKinectPower(std_srvs::Empty::Request  &req,
             std_srvs::Empty::Response &res );
+bool toggleHandState(std_srvs::Empty::Request  &req,
+            std_srvs::Empty::Response &res );
 bool setArmPosition(bilibot_node::SetArmPosition::Request  &req,
             bilibot_node::SetArmPosition::Response &res );
 
@@ -167,6 +169,8 @@ int main(int argc, char **argv)
     std::copy(cov.begin(), cov.end(), imu.angular_velocity_covariance.begin());
     std::copy(cov2.begin(), cov2.end(), imu.linear_acceleration_covariance.begin());
 
+    ros::ServiceServer hand_state_service = n.advertiseService("toggle_hand_state", toggleHandState);
+    ros::ServiceServer create_pwr_service = n.advertiseService("toggle_create_power", toggleCreatePower);
     ros::ServiceServer kinect_pwr_service = n.advertiseService("toggle_kinect_power", toggleKinectPower);
     ros::Publisher sensor_state_pub = n.advertise<bilibot_node::PowerboardSensorState>("sensor_state", 1);
     ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("imu/data", 1);
@@ -227,6 +231,17 @@ bool toggleCreatePower(std_srvs::Empty::Request  &req,
     ROS_INFO("toggling power to create");
     uint8_t unused = 0;
     packet_t* txPkt = PKT_Create(PKTYPE_CMD_TOGGLE_CREATE, 0, &unused, 1);
+    sendPacket(serial, txPkt);
+    free(txPkt);
+    return true;
+}
+
+bool toggleHandState(std_srvs::Empty::Request  &req,
+            std_srvs::Empty::Response &res )
+{
+    ROS_INFO("toggling hand state");
+    uint8_t unused = 0;
+    packet_t* txPkt = PKT_Create(PKTYPE_CMD_TOGGLE_HAND_STATE, 0, &unused, 1);
     sendPacket(serial, txPkt);
     free(txPkt);
     return true;
