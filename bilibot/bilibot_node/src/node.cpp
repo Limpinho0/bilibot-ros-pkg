@@ -170,6 +170,7 @@ int main(int argc, char **argv)
     std::copy(cov2.begin(), cov2.end(), imu.linear_acceleration_covariance.begin());
 
     ros::ServiceServer hand_state_service = n.advertiseService("toggle_hand_state", toggleHandState);
+    ros::ServiceServer arm_pos_service = n.advertiseService("set_arm_pos", setArmPosition);
     ros::ServiceServer create_pwr_service = n.advertiseService("toggle_create_power", toggleCreatePower);
     ros::ServiceServer kinect_pwr_service = n.advertiseService("toggle_kinect_power", toggleKinectPower);
     ros::Publisher sensor_state_pub = n.advertise<bilibot_node::PowerboardSensorState>("sensor_state", 1);
