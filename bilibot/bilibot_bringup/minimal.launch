@@ -9,20 +9,6 @@
 
   <node pkg="tf" type="static_transform_publisher" name="gyro_link_tf" args="0 0 0 0 0 0 base_footprint gyro_link 50" />
 
-  <!-- The odometry estimator -->
-  <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
-    <param name="freq" value="10.0"/>
-    <param name="sensor_timeout" value="1.0"/>
-    <param name="publish_tf" value="true"/>
-    <param name="odom_used" value="true"/>
-    <param name="imu_used" value="true"/>
-    <param name="vo_used" value="false"/>
-    <remap from="imu_data" to="imu/data"/>
-  </node>
-
-  <node pkg="create_node" type="create_node.py" name="create_node" output="screen" respawn="true">
-  </node>
-
   <node pkg="bilibot_node" type="bilibot_node" name="bilibot_node" output="screen" respawn="true">
   </node>
 
