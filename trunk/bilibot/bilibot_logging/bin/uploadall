@@ -3,8 +3,8 @@ datestamp=$(date +%s)
 bindir=##PATHHERE##
 
 
-history > /tmp/toup
+/bin/cp /home/bilibot/.bash_history /tmp/toup >> /tmp/toup 2>&1
 $bindir/uploadlog history_$datestamp
-ifconfig > /tmp/toup
+/sbin/ifconfig > /tmp/toup 2>&1
 $bindir/uploadlog ifconfig_$datestamp
 $bindir/uploadlogs $datestamp
