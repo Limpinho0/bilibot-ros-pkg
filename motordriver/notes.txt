@@ -1,0 +1,8 @@
+notes:
+
+make sure the interrupt function is correct, or the chip will reset when the interrupt is enabled
+-(this did not show up until the interrupt was called though)
+
+must read/clear the recieve buffer in order to continue transmitting when using recieve interrupt.
+also, remember that the programmer shares the rx,tx ports, so you have to unplug the programmer to transmit data
+ 
