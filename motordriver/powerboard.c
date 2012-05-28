@@ -24,6 +24,12 @@ void togglePD7(){
 	else
 		PORTD |= 0x80;
 }
+void togglePD4(){
+	if(PORTD & 0x10)
+		PORTD &= 0xef;
+	else
+		PORTD |= 0x10;
+}
 
 /** LUFA CDC Class driver interface configuration and state information. This structure is
  *  passed to all CDC Class driver functions, so that multiple instances of the same class
@@ -112,15 +118,16 @@ void transmitGyroState(){
     free(pkt);
 }
 
+uint8_t echoback_payload[4];
 //TODO: this is just to test tranmitting. the encoders are not hooked up yet (5/19/2012)
 void transmitEncoderState(){
-    uint8_t payload[1];
+//     uint8_t payload[4];
 
     // fill in payload
-    payload[0] = 13;
+//     payload[0] = 13;
 
     CDC_Device_Flush(&VirtualSerial_CDC_Interface);
-    packet_t* pkt = PKT_Create(PKTYPE_STATUS_ENCODER_RAW, seq++, payload, 1);
+    packet_t* pkt = PKT_Create(PKTYPE_STATUS_ENCODER_RAW, seq++, echoback_payload, 4);
     uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
     for(int i=0; i < len; i++) {
         sendByte(txBuffer[i]);
@@ -224,13 +231,13 @@ int main(void)
         int16_t rxByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
 
 		if (!(rxByte < 0)){
-		PORTD |=0x80;
 
             // oddly ReceiveByte returns a 16-bit int
             uint8_t byte = (uint8_t)rxByte;
 
             // incrementally builds packets byte-by-byte 
             if (PKT_Decoded(byte, &rxPkt, &rxStat) != DECODE_STATUS_INCOMPLETE) {
+		togglePD4();
                 switch (rxStat.state)
                 {
                 case DECODE_STATUS_COMPLETE:
@@ -240,7 +247,10 @@ int main(void)
 //                         HL_SetBasePosition(rxPkt.payload[0]);
                         break;
                     case PKTYPE_CMD_SET_BASE_VEL:
-// 			  HL_setMotor(rxPkt.payload[0],rxPkt.payload[1],rxPkt.payload[2],rxPkt.payload[3]);
+		      togglePD4();
+		      for(int i=0;i<4;i++)
+		        echoback_payload[i] = rxPkt.payload[i];
+ 			  HL_setMotor(rxPkt.payload[1],rxPkt.payload[0],rxPkt.payload[3],rxPkt.payload[2]);
 			  // h_right,  l_right,  h_left,  l_left
                         break;
                     case PKTYPE_CMD_SET_PWR_STATE:
@@ -332,7 +342,7 @@ void SetupHardware(void)
 	DDRD |= 0xf0; /* set LEDs to output */
 	PORTD &= 0x0f; /* set LEDs to output */
 SetupMotors();
-// EnableMotors();
+ EnableMotors();
 	USB_Init();
 	
 }
