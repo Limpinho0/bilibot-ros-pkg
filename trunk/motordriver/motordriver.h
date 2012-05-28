@@ -336,7 +336,7 @@ void HL_setMotor(uint8_t h_right, uint8_t l_right, uint8_t h_left, uint8_t l_lef
  left = l_left+(h_left<<8);
  
  //TODO: may want to do a ramp here, or atleast massage the input a little...
- setAbsSpeed(left,right);
+ setAbsSpeed(-1*left,right);
   
 }
 

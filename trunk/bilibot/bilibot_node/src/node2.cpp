@@ -117,8 +117,8 @@ double orientation = 0;
 
 bool isMoving = false;
 
-#define STEERMULT 5
-#define VELMULT 5
+#define STEERMULT 400
+#define VELMULT 400
 #define MAXSPEED 1000
 
 void velCallback(const geometry_msgs::Twist& velMsg)
@@ -130,6 +130,7 @@ void velCallback(const geometry_msgs::Twist& velMsg)
   int16_t angular = std::min(MAXSPEED,std::max(-MAXSPEED,(int)(STEERMULT*velMsg.angular.z)));
   int16_t right_pwm = std::min(MAXSPEED,std::max(-MAXSPEED,linear+angular));  
   int16_t left_pwm = std::min(MAXSPEED,std::max(-MAXSPEED,linear-angular));  
+  std::cout<<"sending motorpwm: L: "<<left_pwm<<"  R: "<<right_pwm<<std::endl;
   sendMotorPWM(left_pwm,right_pwm);
 }
 
@@ -178,7 +179,14 @@ void printGryo(packet_t rxPkt){
   
 }
 
-
+void printEncoder(packet_t rxPkt){
+  int16_t left_pwm,right_pwm;
+  left_pwm = rxPkt.payload[0]+(rxPkt.payload[1]<<8);
+  right_pwm = rxPkt.payload[2]+(rxPkt.payload[3]<<8);
+  printf("PWM Feedback: R: %6i  L: %6i  ",left_pwm,right_pwm);
+  std::cout<<std::endl;
+  
+}
 
 
 //TODO: make calibration routine for:
@@ -257,7 +265,8 @@ int main(int argc, char **argv)
                     break;
                 case PKTYPE_STATUS_ENCODER_RAW:
 		  std::cout<<std::endl;
-		  ROS_INFO("encoder state not supported...");
+		  printEncoder(rxPkt);
+// 		  ROS_INFO("encoder state not supported...");
 //                     updateGyroState(imu, rxPkt, calibration);
 			//TODO: fill this out!S
 //                     pbstate.gyro_raw = rxPkt.payload[0];
@@ -322,10 +331,12 @@ bool toggleKinectPower(std_srvs::Empty::Request  &req,
 
 void sendMotorPWM(int16_t left_pwm, int16_t right_pwm){
     uint8_t payload[4];
-    packet_t* txPkt = PKT_Create(PKTYPE_CMD_SET_BASE_VEL, 0, payload, 4);
     //convert to packets  
-    memcpy(txPkt->payload,&right_pwm,2);
-    memcpy(txPkt->payload+2,&left_pwm,2);    
+    memcpy(payload,&right_pwm,2);
+    memcpy(payload+2,&left_pwm,2); 
+    packet_t* txPkt = PKT_Create(PKTYPE_CMD_SET_BASE_VEL, 0, payload, 4);
+    
+    printf("PWM payload: R: %6i -> %6i %6i  L:%6i -> %6i %6i  \n",right_pwm, payload[0],payload[1],left_pwm,payload[2],payload[3] );
     sendPacket(serial, txPkt);
     free(txPkt); 
 }
