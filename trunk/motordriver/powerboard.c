@@ -7,8 +7,10 @@
 // #include "music.h"
 #include <stdlib.h>
 
+#include "utility/twi.h"
 #include "motordriver.h"
 
+#include "gyro.h"
 
 void togglePD6(){
 	if(PORTD & 0x40)
@@ -94,21 +96,21 @@ SIGNAL(TIMER1_OVF_vect){
 //     free(pkt);
 // }
 
-// void transmitGyroState(){
-//     uint8_t payload[1];
-// 
-//     // fill in payload
-//     payload[0] = ADC_GYRO;
-// 
-//     CDC_Device_Flush(&VirtualSerial_CDC_Interface);
-//     packet_t* pkt = PKT_Create(PKTYPE_STATUS_GYRO_RAW, seq++, payload, 1);
-//     uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
-//     for(int i=0; i < len; i++) {
-//         sendByte(txBuffer[i]);
-//         handleUSB();
-//     }
-//     free(pkt);
-// }
+void transmitGyroState(){
+    uint8_t payload[8];
+    
+    // fill in payload
+    ReadGyro(payload);
+
+    CDC_Device_Flush(&VirtualSerial_CDC_Interface);
+    packet_t* pkt = PKT_Create(PKTYPE_STATUS_3GYRO_RAW, seq++, payload, 8);
+    uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
+    for(int i=0; i < len; i++) {
+        sendByte(txBuffer[i]);
+        handleUSB();
+    }
+    free(pkt);
+}
 
 //TODO: this is just to test tranmitting. the encoders are not hooked up yet (5/19/2012)
 void transmitEncoderState(){
@@ -207,6 +209,8 @@ int main(void)
 
      sei();
 
+    InitGyro();
+ 
     CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
     CDC_Device_USBTask(&VirtualSerial_CDC_Interface);
     USB_USBTask();
@@ -282,7 +286,7 @@ int main(void)
 		  togglePD6();
 //             LEDs_ToggleLEDs(LEDS_LED2);
 //             transmitArmState();
-//             transmitGyroState();
+             transmitGyroState();
               transmitEncoderState();
 //             transmitBattState();
             counter = 0;

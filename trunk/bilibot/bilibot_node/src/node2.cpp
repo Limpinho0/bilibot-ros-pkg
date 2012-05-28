@@ -167,6 +167,20 @@ void updateGyroState(sensor_msgs::Imu& imuMsg, packet_t rxPkt, boost::circular_b
     imuMsg.orientation = tf::createQuaternionMsgFromYaw(orientation * (M_PI/180.0));
 }
 
+void printGryo(packet_t rxPkt){
+  int16_t temp,x,y,z;
+  temp = rxPkt.payload[1]+(rxPkt.payload[0]<<8);
+  x = rxPkt.payload[3]+(rxPkt.payload[2]<<8);
+  y = rxPkt.payload[5]+(rxPkt.payload[4]<<8);
+  z = rxPkt.payload[7]+(rxPkt.payload[6]<<8);
+  printf("Gyro Reading: T: %6i  x: %6i  y: %6i  z: %6i",temp,x,y,z);
+  std::cout<<std::endl;
+  
+}
+
+
+
+
 //TODO: make calibration routine for:
 //  IMU
 //  Wheel encoder
@@ -234,7 +248,8 @@ int main(int argc, char **argv)
                      updateMotorState(pbstate,rxPkt);
                      motor_state_pub.publish(pbstate);
                     break;
-                case PKTYPE_STATUS_GYRO_RAW: 
+                case PKTYPE_STATUS_3GYRO_RAW: 
+		  printGryo(rxPkt);
 //                     updateGyroState(imu, rxPkt, calibration);
 			//TODO: fill this out!S
 //                     pbstate.gyro_raw = rxPkt.payload[0];
