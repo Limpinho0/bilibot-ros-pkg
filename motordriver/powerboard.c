@@ -9,6 +9,7 @@
 
 #include "utility/twi.h"
 #include "motordriver.h"
+#include "encoder.h"
 
 #include "gyro.h"
 
@@ -136,6 +137,25 @@ void transmitEncoderState(){
     free(pkt);
 }
 
+void transmitMotorState(){
+    uint8_t payload[4];
+
+    // fill in payload
+    payload[0] = curr1;
+    payload[1] = curr2;
+    payload[2] = temp1;
+    payload[3] = temp2;
+
+    CDC_Device_Flush(&VirtualSerial_CDC_Interface);
+    packet_t* pkt = PKT_Create(PKTYPE_STATUS_MOTOR_STATE, seq++, payload, 4);
+    uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
+    for(int i=0; i < len; i++) {
+        sendByte(txBuffer[i]);
+        handleUSB();
+    }
+    free(pkt);
+}
+
 // void setupGeneralState(){
 //   SETUP_DEMO_BTN; h_DEMO_BTN;
 //   SETUP_ESTOP_BTN;  h_ESTOP_BTN;
@@ -203,7 +223,7 @@ void transmitEncoderState(){
 int main(void)
 {
 	SetupHardware();
-
+    uint8_t last_motor_cmd=10;
     uint16_t counter=0;
     seq = 0;
     txBuffer = (uint8_t*)malloc(sizeof(packet_t));
@@ -251,6 +271,7 @@ int main(void)
 		      for(int i=0;i<4;i++)
 		        echoback_payload[i] = rxPkt.payload[i];
  			  HL_setMotor(rxPkt.payload[1],rxPkt.payload[0],rxPkt.payload[3],rxPkt.payload[2]);
+			  last_motor_cmd=0;
 			  // h_right,  l_right,  h_left,  l_left
                         break;
                     case PKTYPE_CMD_SET_PWR_STATE:
@@ -294,10 +315,15 @@ int main(void)
 		  togglePD7();
 		if (counter > 1000){
 		  togglePD6();
+		  if(last_motor_cmd>10)
+		    setAbsSpeed(0,0);
+		  
+		  last_motor_cmd++;
 //             LEDs_ToggleLEDs(LEDS_LED2);
 //             transmitArmState();
              transmitGyroState();
               transmitEncoderState();
+              transmitMotorState();
 //             transmitBattState();
             counter = 0;
 		}
