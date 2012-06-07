@@ -10,8 +10,11 @@
 #include "utility/twi.h"
 #include "motordriver.h"
 #include "encoder.h"
+#include "adc2.h"
 
 #include "gyro.h"
+
+#include "ramp.h"
 
 void togglePD6(){
 	if(PORTD & 0x40)
@@ -77,9 +80,7 @@ void handleUSB(void)
 }
 
 
-SIGNAL(TIMER1_OVF_vect){
-  UpdateM1Ramp();
-}
+
 
 
 // void transmitArmState(){
@@ -102,6 +103,73 @@ SIGNAL(TIMER1_OVF_vect){
 //     }
 //     free(pkt);
 // }
+
+
+
+uint8_t curr1r[250];
+uint8_t tbuffer[102];
+// uint8_t curr2r[50];
+uint8_t wpos,rpos;
+uint8_t wbuffcount,rbuffcount;
+
+//copies current data to buffer
+uint8_t copyToBuffer(){
+  //find distance from rpos to wpos:
+  uint16_t bsize;
+  if(wpos > rpos)
+    bsize=wpos-rpos;
+  else
+    bsize=(250+wpos)-rpos;
+  //TODO: this would be really simple if the buffer size was the max value of uint8_t
+  if(bsize>100){ //we'll always transmit a constant size
+    for(int i=0;i<100;i++)
+      tbuffer[i]=curr1r[(rpos+i)%250];    
+    rpos=(rpos+100)%250;
+    if(rpos<100) rbuffcount++;
+  }
+  return bsize;
+}
+
+void transmitMotorBuffer(){
+//     uint8_t payload[4];
+    uint8_t bsize = copyToBuffer();
+    
+    if(bsize<=100)
+      return;
+    // fill in payload
+    tbuffer[100] = bsize;
+    tbuffer[101] = wbuffcount-rbuffcount;
+
+    CDC_Device_Flush(&VirtualSerial_CDC_Interface);
+    packet_t* pkt = PKT_Create(PKTYPE_STATUS_MOTOR_STATE, seq++, tbuffer, 102);
+    uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
+    for(int i=0; i < len; i++) {
+        sendByte(txBuffer[i]);
+        handleUSB();
+    }
+    free(pkt);
+}
+
+// void transmitMotorBuffer(){
+//     uint8_t payload[4];
+// 
+//     // fill in payload
+//     payload[0] = curr1;
+//     payload[1] = curr2;
+//     payload[2] = temp1;
+//     payload[3] = temp2;
+// 
+//     CDC_Device_Flush(&VirtualSerial_CDC_Interface);
+//     packet_t* pkt = PKT_Create(PKTYPE_STATUS_MOTOR_STATE, seq++, payload, 4);
+//     uint8_t len = PKT_ToBuffer(pkt, txBuffer); 
+//     for(int i=0; i < len; i++) {
+//         sendByte(txBuffer[i]);
+//         handleUSB();
+//     }
+//     free(pkt);
+// }
+
+
 
 void transmitGyroState(){
     uint8_t payload[8];
@@ -235,7 +303,7 @@ int main(void)
 // 	LEDs_SetAllLEDs(LEDMASK_USB_NOTREADY);
 
      sei();
-
+    ADCSRA |= 0x40; //start ADC conversion
     InitGyro();
  
     CDC_Device_ReceiveByte(&VirtualSerial_CDC_Interface);
@@ -243,7 +311,7 @@ int main(void)
     USB_USBTask();
 //     LEDs_ToggleLEDs(LEDS_LED2);
 
-    uint8_t handOpen = 1;
+//     uint8_t handOpen = 1;
 
     for (;;)
     {
@@ -270,7 +338,8 @@ int main(void)
 		      togglePD4();
 		      for(int i=0;i<4;i++)
 		        echoback_payload[i] = rxPkt.payload[i];
- 			  HL_setMotor(rxPkt.payload[1],rxPkt.payload[0],rxPkt.payload[3],rxPkt.payload[2]);
+//  			  HL_setMotor(rxPkt.payload[1],rxPkt.payload[0],rxPkt.payload[3],rxPkt.payload[2]);
+ 			  setSpeedRamps(rxPkt.payload[1],rxPkt.payload[0],rxPkt.payload[3],rxPkt.payload[2]);
 			  last_motor_cmd=0;
 			  // h_right,  l_right,  h_left,  l_left
                         break;
@@ -311,19 +380,22 @@ int main(void)
 		}
 
         // FIXME: this const counter check should be replace by timer delta function
-		if ((counter % 100) ==0)
+		if ((counter % 10) ==0){
+ 		  transmitMotorBuffer();
+  
 		  togglePD7();
-		if (counter > 1000){
+		}
+		if (counter > 100){
 		  togglePD6();
 		  if(last_motor_cmd>10)
-		    setAbsSpeed(0,0);
+		    setRamps(0,0);
 		  
 		  last_motor_cmd++;
 //             LEDs_ToggleLEDs(LEDS_LED2);
 //             transmitArmState();
-             transmitGyroState();
-              transmitEncoderState();
-              transmitMotorState();
+//               transmitGyroState();
+//               transmitEncoderState();
+//               transmitMotorState();
 //             transmitBattState();
             counter = 0;
 		}
@@ -352,7 +424,7 @@ void SetupHardware(void)
 //     setupGeneralState();
 
 //     setupMotors();
-//     setupADC();
+     setupADC();
 
     //start next adc read:
 //     ADCSRA |= 0x40;
@@ -401,3 +473,53 @@ void EVENT_USB_Device_ControlRequest(void)
 	CDC_Device_ProcessControlRequest(&VirtualSerial_CDC_Interface);
 }
 
+uint16_t adccount;
+
+//for testing current
+SIGNAL(ADC_vect){ 
+  
+
+  uint8_t channel = ADMUX & 0x07;
+  //make reading
+  
+  //just making two readings: the two pots - ADC0 and ADC2
+  
+  switch (channel){
+    case 3:
+//       curr1=ADCH;
+//       uint8_t nextpos=(wpos+1)%250;
+//       curr1r[nextpos]=curr1;
+//       wpos=nextpos;
+//       setADCChannel(7);
+      break;
+    case 7:
+      curr2=ADCH;
+//       setADCChannel(3);
+      break;
+    default:
+//       setADCChannel(3);
+      break;
+
+  }
+      if(channel == 3 /*|| channel == 7*/){
+	uint8_t nextpos=(wpos+1)%250;
+	if(nextpos<wpos) wbuffcount++;
+	curr1r[nextpos]=ADCH;
+	wpos=nextpos;
+      }
+//    if(adccount>=10){ 
+//       transmitMotorState();
+//     togglePD5();
+//     adccount=0;
+//   }
+//   adccount++;
+//     if(channel==7)
+//       channel=2;
+//     if(channel==3)
+//       channel=6;
+//      setADCChannel(channel+1);
+
+  //start next adc read:
+  ADCSRA |= 0x40;
+  
+}

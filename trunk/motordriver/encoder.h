@@ -24,6 +24,13 @@
 #define WEPART 0x10
 
 
+//each tick is 1.8 mm, so 1000 is 1m
+//if the robot can go up to 2.7 m/s
+//and we report at 10hz  we need to store 270 bits, or 34 bytes
+uint8_t tickwheel[40]; //stores one bit for each tick - the level indicates which wheel ticked. (left high)
+uint8_t tickdir[40];   //stores one bit for each tick - the high level indicates forward
+uint8_t tickbit;  //where we are in the tickstorage
+uint8_t tickbyte;  //which byte we are on
 
 
 void initEncoders(){
@@ -53,35 +60,28 @@ void readEncoders(){}
 //used to figure out how far the encoders are apart, and if they need to 
 void calibrateEncoders(){}
 
-//each tick is 1.8 mm, so 1000 is 1m
-//if the robot can go up to 2.7 m/s
-//and we report at 10hz  we need to store 270 bits, or 34 bytes
-uint8_t tickwheel[40]; //stores one bit for each tick - the level indicates which wheel ticked. (left high)
-uint8_t tickdir[40];   //stores one bit for each tick - the high level indicates forward
-uint8_t tickbit;  //where we are in the tickstorage
-uint8_t tickbyte;  //which byte we are on
 
 //TODO: this is not correct. we need to discover this with calibration
 uint8_t getTickDir(uint8_t tickinfo){
-  if(tickinfo && WELA || tickinfo && WERA){
-    if(tickinfo && WEPART) return 1;
+  if((tickinfo & WELA) || (tickinfo & WERA)){
+    if(tickinfo & WEPART) return 1;
     return 0;    
   }
-  if(tickinfo && WELB || tickinfo && WERB){
-    if(tickinfo && WEPART) return 0;
+  if((tickinfo & WELB) || (tickinfo & WERB)){
+    if(tickinfo & WEPART) return 0;
     return 1;    
   }
+  return 0; //this shouldn't happen...
 }
 
 void recordTick(uint8_t tickinfo){
-  uint8_t td = getTickDir(tickinfo);
-  uint8_t tw=0;
-  if(tickinfo && WELA || tickinfo && WELB)
-    tw=1;
-  tw << tickbit;
-  td << tickbit;
-  tickdir[tickbyte] |= td;
-  tickwheel[tickbyte] |= tw;
+  //only update the record if the value is 1.
+  //otherwise, we just increment the tickbit.
+  if(getTickDir(tickinfo) > 0)
+      tickdir[tickbyte] |= (0x01<< tickbit);
+  if((tickinfo & WELA) || (tickinfo & WELB))
+    tickwheel[tickbyte] |= (0x01<< tickbit);
+  
   //now incriment tick placement:
   tickbit++;
   if(tickbit>=8){
