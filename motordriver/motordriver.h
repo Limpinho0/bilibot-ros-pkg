@@ -1,3 +1,9 @@
+
+
+
+#ifndef MOTORDRIVER_H
+#define MOTORDRIVER_H
+
 //Motor driver board driver interface:
 #define MOTORMAX 1000
 
@@ -84,7 +90,7 @@ void SetupMotors(){
 	//  xxxxx00x      //output compare B,A (to OCR1B,A)
 	//  xxxxxxx0      //timer overflow
 	TIMSK1 = 0x01;
-	TIMSK3 = 0x00;
+	TIMSK3 = 0x01;
 
 }
   
@@ -242,46 +248,7 @@ void setAbsSpeed(int16_t m1, int16_t m2){
 }
 
 
-typedef struct {
-  int16_t target;
-  int16_t current;
-  int16_t stepsize;  //number by which to increase/decrease
-  uint8_t stop_when_over; //tells us which direction to check
-  uint8_t enabled;
-} Ramp;
 
-Ramp m1_ramp, m2_ramp;
-
-
-void makeM1Ramp(target,step){
-  m1_ramp.target=target;
-  m1_ramp.current=0;
-  if(TCCR1A & 0x08) //A is pwming
-    m1_ramp.current=OCR1C;
-  else if (TCCR1A && 0x20)
-    m1_ramp.current=-1*OCR1B;
-  m1_ramp.stepsize=step;
-  m1_ramp.stop_when_over=1;
-  if(m1_ramp.target<m1_ramp.current){
-    m1_ramp.stop_when_over=0;
-    m1_ramp.stepsize=step*-1;
-  }
-  m1_ramp.enabled=1;
-  
-}
-
-
-void UpdateM1Ramp(){
-  if(!m1_ramp.enabled)
-    return;
-  m1_ramp.current=m1_ramp.current+m1_ramp.stepsize;
-  if((m1_ramp.stop_when_over && m1_ramp.target<m1_ramp.current) ||
-     (m1_ramp.stop_when_over==0 && m1_ramp.target>m1_ramp.current)) {
-    m1_ramp.enabled=0;
-    return;
-  }
-  setAbsSpeedM1(m1_ramp.current);  
-}
 
 #define STEERMULT 5
 #define VELMULT 5
@@ -340,3 +307,4 @@ void HL_setMotor(uint8_t h_right, uint8_t l_right, uint8_t h_left, uint8_t l_lef
   
 }
 
+#endif

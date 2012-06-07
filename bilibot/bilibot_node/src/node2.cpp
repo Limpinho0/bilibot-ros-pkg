@@ -130,7 +130,7 @@ void velCallback(const geometry_msgs::Twist& velMsg)
   int16_t angular = std::min(MAXSPEED,std::max(-MAXSPEED,(int)(STEERMULT*velMsg.angular.z)));
   int16_t right_pwm = std::min(MAXSPEED,std::max(-MAXSPEED,linear+angular));  
   int16_t left_pwm = std::min(MAXSPEED,std::max(-MAXSPEED,linear-angular));  
-  std::cout<<"sending motorpwm: L: "<<left_pwm<<"  R: "<<right_pwm<<std::endl;
+//   std::cout<<"sending motorpwm: L: "<<left_pwm<<"  R: "<<right_pwm<<std::endl;
   sendMotorPWM(left_pwm,right_pwm);
 }
 
@@ -188,6 +188,26 @@ void printEncoder(packet_t rxPkt){
   
 }
 
+//     // fill in payload
+//     payload[0] = curr1;
+//     payload[1] = curr2;
+//     payload[2] = temp1;
+//     payload[3] = temp2;
+
+// void printMotorState(packet_t rxPkt){
+//   printf("Motor Feedback Left: Temp: %4u Curr: %4u    ",rxPkt.payload[2],rxPkt.payload[0]);
+//   printf("|||   Right:  Temp: %4u  Curr: %4u",rxPkt.payload[3],rxPkt.payload[1]);
+//   std::cout<<std::endl;
+//   
+// }
+
+void printMotorState(packet_t rxPkt){
+  std::cout<<"Motor Feedback: ";
+  for(int i=0;i<102; i++)
+  printf("%1u ",rxPkt.payload[i]);
+  std::cout<<std::endl;
+  
+}
 
 //TODO: make calibration routine for:
 //  IMU
@@ -239,7 +259,7 @@ int main(int argc, char **argv)
     while(ros::ok())
     {
         uint8_t byte = serial->readByte();
-	std::cout<<".";
+// 	std::cout<<".";
         if(PKT_Decoded(byte, &rxPkt, &status) != DECODE_STATUS_INCOMPLETE) {
             switch(status.state)
             {
@@ -253,8 +273,9 @@ int main(int argc, char **argv)
 //                     sensor_state_pub.publish(pbstate);
                     break;
                 case PKTYPE_STATUS_MOTOR_STATE:
-                     updateMotorState(pbstate,rxPkt);
-                     motor_state_pub.publish(pbstate);
+		      printMotorState(rxPkt);
+//                      updateMotorState(pbstate,rxPkt);
+//                      motor_state_pub.publish(pbstate);
                     break;
                 case PKTYPE_STATUS_3GYRO_RAW: 
 		  printGryo(rxPkt);
@@ -336,7 +357,7 @@ void sendMotorPWM(int16_t left_pwm, int16_t right_pwm){
     memcpy(payload+2,&left_pwm,2); 
     packet_t* txPkt = PKT_Create(PKTYPE_CMD_SET_BASE_VEL, 0, payload, 4);
     
-    printf("PWM payload: R: %6i -> %6i %6i  L:%6i -> %6i %6i  \n",right_pwm, payload[0],payload[1],left_pwm,payload[2],payload[3] );
+//     printf("PWM payload: R: %6i -> %6i %6i  L:%6i -> %6i %6i  \n",right_pwm, payload[0],payload[1],left_pwm,payload[2],payload[3] );
     sendPacket(serial, txPkt);
     free(txPkt); 
 }
