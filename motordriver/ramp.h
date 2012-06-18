@@ -152,8 +152,8 @@ void UpdateM2Ramp(){
 
 //high level funcs:
 void setRamps(int16_t right, int16_t left){
-   makeM2Ramp(-1*left,-5);
- makeM1Ramp(right,-5);
+   makeM2Ramp(scaleCmd(-1*left),-20);
+ makeM1Ramp(scaleCmd(right),-20);
   
 }
 
@@ -164,9 +164,7 @@ void setSpeedRamps(uint8_t h_right, uint8_t l_right, uint8_t h_left, uint8_t l_l
  int16_t right,left;
  right = l_right+(h_right<<8);
  left = l_left+(h_left<<8);
- 
- makeM2Ramp(-1*left,-5);
- makeM1Ramp(right,-5);
+ setRamps(right,-1*left);
  
   
 }
