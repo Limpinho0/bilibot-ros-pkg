@@ -380,12 +380,12 @@ int main(void)
 		}
 
         // FIXME: this const counter check should be replace by timer delta function
-		if ((counter % 10) ==0){
+		if ((counter % 100) ==0){
  		  transmitMotorBuffer();
   
 		  togglePD7();
 		}
-		if (counter > 100){
+		if (counter > 1000){
 		  togglePD6();
 		  if(last_motor_cmd>10)
 		    setRamps(0,0);

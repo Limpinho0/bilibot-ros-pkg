@@ -5,7 +5,7 @@
 #define MOTORDRIVER_H
 
 //Motor driver board driver interface:
-#define MOTORMAX 1000
+#define MOTORMAX 500
 
 //motor connection:
 // Motor 1:
@@ -239,12 +239,19 @@ void setAbsSpeedM2(int16_t m2){
   
 }
 
+int16_t scaleCmd(int16_t in){
+  //expected input is between -1000 and 1000
+  //need to scale it to -500 to 500
+ return in/2; 
+}
+
 
 //low level: set the exact speed we tell it, immediatelly
 //positive means A is PWM'ing, negative means B is PWM'ing
+//this is one of the gateways between high and low level, so the command must be scaled here
 void setAbsSpeed(int16_t m1, int16_t m2){
-  setAbsSpeedM1(m1);
-  setAbsSpeedM2(m2);
+  setAbsSpeedM1(scaleCmd(m1));
+  setAbsSpeedM2(scaleCmd(m2));
 }
 
 
