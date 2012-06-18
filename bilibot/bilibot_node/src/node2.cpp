@@ -13,6 +13,7 @@
 #include "bilibot_node/SetMotorPWM.h"
 #include "std_srvs/Empty.h"
 #include "sensor_msgs/Imu.h"
+#include "sensor_msgs/Joy.h"
 #include "nav_msgs/Odometry.h"
 #include "serial.h"
 
@@ -117,8 +118,8 @@ double orientation = 0;
 
 bool isMoving = false;
 
-#define STEERMULT 400
-#define VELMULT 400
+#define STEERMULT 1000
+#define VELMULT 1000
 #define MAXSPEED 1000
 
 void velCallback(const geometry_msgs::Twist& velMsg)
@@ -128,6 +129,24 @@ void velCallback(const geometry_msgs::Twist& velMsg)
   //scale first to help avoid saturation
   int16_t linear = std::min(MAXSPEED,std::max(-MAXSPEED,(int)(VELMULT*velMsg.linear.x)));
   int16_t angular = std::min(MAXSPEED,std::max(-MAXSPEED,(int)(STEERMULT*velMsg.angular.z)));
+  int16_t right_pwm = std::min(MAXSPEED,std::max(-MAXSPEED,linear+angular));  
+  int16_t left_pwm = std::min(MAXSPEED,std::max(-MAXSPEED,linear-angular));  
+//   std::cout<<"sending motorpwm: L: "<<left_pwm<<"  R: "<<right_pwm<<std::endl;
+  sendMotorPWM(left_pwm,right_pwm);
+}
+
+
+void joyCallback(const sensor_msgs::Joy& joyMsg)
+{
+  if(joyMsg.buttons[5]==0){
+    sendMotorPWM(0,0);
+    return;
+  }
+  //assume linear and twist will be from -1.0 to 1.0
+  //scale to -1000 to 1000
+  //scale first to help avoid saturation
+  int16_t linear = std::min(MAXSPEED,std::max(-MAXSPEED,(int)(VELMULT*joyMsg.axes[4])));
+  int16_t angular = std::min(MAXSPEED,std::max(-MAXSPEED,(int)(STEERMULT*joyMsg.axes[3])));
   int16_t right_pwm = std::min(MAXSPEED,std::max(-MAXSPEED,linear+angular));  
   int16_t left_pwm = std::min(MAXSPEED,std::max(-MAXSPEED,linear-angular));  
 //   std::cout<<"sending motorpwm: L: "<<left_pwm<<"  R: "<<right_pwm<<std::endl;
@@ -250,6 +269,7 @@ int main(int argc, char **argv)
     ros::Publisher motor_state_pub = n.advertise<bilibot_node::MotorState>("motor_state", 1);
 //     ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("imu/data", 1);
     ros::Subscriber vel_sub = n.subscribe("cmd_vel", 1, velCallback);
+    ros::Subscriber joy_sub = n.subscribe("joy", 1, joyCallback);
 
     uint8_t position = 255;
     txPkt = PKT_Create(PKTYPE_CMD_SET_ARM_POS, 0, &position, 1);
